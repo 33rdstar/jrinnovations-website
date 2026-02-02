@@ -71,7 +71,7 @@ const HomePage = () => {
           <div className="mb-12 flex justify-center">
             <img 
               src="/laptop-mockup2.png"  
-              alt=" "
+              alt="img"
               className="w-full max-w-2xl h-auto transform transition-all duration-700 hover:scale-105 hover:-translate-y-2 drop-shadow-2xl"
             />
           </div>
@@ -164,6 +164,7 @@ const HomePage = () => {
                 >
                   <h4 className="text-xl font-bold mb-2 text-gray-800">{service.title}</h4>
                   <p className="text-gray-600">{service.desc}</p>
+                  <p className="text-gray-800 text-xs mt-2 ">-Learn More...</p>
                 </Link>
               ))}
             </div>
@@ -183,6 +184,7 @@ const HomePage = () => {
                 >
                   <h4 className="text-xl font-bold mb-2 text-gray-800">{service.title}</h4>
                   <p className="text-gray-600">{service.desc}</p>
+                   <p className="text-gray-800 text-xs mt-2 ">-Learn More...</p>
                 </Link>
               ))}
             </div>
@@ -202,6 +204,7 @@ const HomePage = () => {
                 >
                   <h4 className="text-xl font-bold mb-2 text-gray-800">{service.title}</h4>
                   <p className="text-gray-600">{service.desc}</p>
+                   <p className="text-gray-800 text-xs mt-2 ">-Learn More...</p>
                 </Link>
               ))}
             </div>
@@ -210,8 +213,17 @@ const HomePage = () => {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 px-4 bg-gradient-to-b from-blue-600 to-blue-800 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+      <section 
+        id="about" 
+        className="py-20 px-4 relative z-10 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/About-bg.jpg)',
+        }}
+      >
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/10"></div>
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl font-bold mb-6 text-white">About JR Innovations</h2>
           <p className="text-lg text-white mb-6">
             At JR Innovations, we believe in pushing boundaries and thinking beyond imagination. 
@@ -231,36 +243,62 @@ const HomePage = () => {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-4xl font-bold text-center mb-12">Get In Touch</h2>
           
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center transform transition-all duration-300 hover:scale-110">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            <a 
+              href="https://wa.me/260964978222" 
+              className="text-center transform transition-all duration-300 hover:scale-110 block"
+            >
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 hover:shadow-xl hover:bg-green-600">
                 <MessageCircle className="text-white" size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">WhatsApp</h3>
-              <a href="https://wa.me/260964978222" className="text-purple-600 hover:underline transition-all duration-300">
+              <h3 className="font-bold text-lg mb-2 text-gray-800">WhatsApp</h3>
+              <span className="text-purple-600 hover:underline transition-all duration-300">
                 +260 964 978 222
-              </a>
-            </div>
+              </span>
+            </a>
 
-            <div className="text-center transform transition-all duration-300 hover:scale-110">
+            <a 
+              href="tel:+260964978222" 
+              className="text-center transform transition-all duration-300 hover:scale-110 block"
+            >
               <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 hover:shadow-xl hover:bg-blue-600">
                 <Phone className="text-white" size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Phone</h3>
-              <a href="tel:+260964978222" className="text-purple-600 hover:underline transition-all duration-300">
+              <h3 className="font-bold text-lg mb-2 text-gray-800">Phone</h3>
+              <span className="text-purple-600 hover:underline transition-all duration-300">
                 +260 964 978 222
-              </a>
-            </div>
+              </span>
+            </a>
 
-            <div className="text-center transform transition-all duration-300 hover:scale-110">
+            <a 
+              href="mailto:juniorinnovations33@gmail.com" 
+              className="text-center transform transition-all duration-300 hover:scale-110 block"
+            >
               <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 hover:shadow-xl hover:bg-red-600">
                 <Mail className="text-white" size={32} />
               </div>
-              <h3 className="font-bold text-lg mb-2">Email</h3>
-              <a href="mailto:juniorinnovations33@gmail.com" className="text-purple-600 hover:underline break-all transition-all duration-300">
+              <h3 className="font-bold text-lg mb-2 text-gray-800">Email</h3>
+              <span className="text-purple-600 hover:underline break-all transition-all duration-300">
                 juniorinnovations33@gmail.com
-              </a>
-            </div>
+              </span>
+            </a>
+
+            <a 
+              href="https://web.facebook.com/Juniorinnovations33" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-center transform transition-all duration-300 hover:scale-110 block"
+            >
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 hover:shadow-xl hover:bg-blue-700">
+                <svg className="text-white w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </div>
+              <h3 className="font-bold text-lg mb-2 text-gray-800">Facebook</h3>
+              <span className="text-purple-600 hover:underline transition-all duration-300">
+                Follow Us
+              </span>
+            </a>
           </div>
 
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white text-center shadow-xl">

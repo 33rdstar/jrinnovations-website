@@ -175,21 +175,37 @@ const EntertainmentPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 relative z-10">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
-              Entertainment & Management
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Comprehensive artist management and event services that create unforgettable experiences. We turn talent into success stories.
-          </p>
-          <Link 
-            to="/#contact"
-            className="inline-block bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
-          >
-            Let's Work Together
-          </Link>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            {/* Text Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
+                  Entertainment & Management
+                </span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl lg:max-w-none">
+                Comprehensive artist management and event services that create unforgettable experiences. We turn talent into success stories.
+              </p>
+              <Link
+                to="/#contact"
+                className="inline-block bg-gradient-to-r from-green-600 to-teal-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
+              >
+                Let's Work Together
+              </Link>
+            </div>
+
+            {/* Hiphop Mockup */}
+            <div className="flex-1 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-sm lg:max-w-md">
+                <img
+                  src="/hiphop_Mockup1.png"
+                  alt="img"
+                  className="w-full h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -200,8 +216,8 @@ const EntertainmentPage = () => {
             {services.map((service, index) => {
               const colors = colorVariants[service.color];
               return (
-                <div 
-                  key={service.id} 
+                <div
+                  key={service.id}
                   id={service.id}
                   className="scroll-mt-24"
                 >
@@ -244,7 +260,7 @@ const EntertainmentPage = () => {
                           <h3 className="text-xl font-bold text-gray-800 mb-3">Our Services Include:</h3>
                           <div className="flex flex-wrap gap-2">
                             {service.services.map((serviceItem, idx) => (
-                              <span 
+                              <span
                                 key={idx}
                                 className={`px-4 py-2 bg-white rounded-full text-sm font-medium ${colors.text} border ${colors.border} ${colors.hover} transition-colors duration-300`}
                               >
@@ -256,7 +272,7 @@ const EntertainmentPage = () => {
 
                         {/* CTA Button */}
                         <div className="mt-8">
-                          <Link 
+                          <Link
                             to="/#contact"
                             className={`inline-block bg-gradient-to-r ${colors.gradient} text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition-all duration-500 transform hover:scale-105`}
                           >
@@ -278,17 +294,17 @@ const EntertainmentPage = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-white">Ready to Take Your Entertainment to the Next Level?</h2>
           <p className="text-lg text-white mb-8">
-            Whether you're an artist looking for management or planning an unforgettable event, 
+            Whether you're an artist looking for management or planning an unforgettable event,
             we have the expertise and connections to make it happen.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
+            <Link
               to="/#contact"
               className="bg-white text-green-600 px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
             >
               Start Your Journey
             </Link>
-            <Link 
+            <Link
               to="/"
               className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
             >

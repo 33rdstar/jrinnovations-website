@@ -176,21 +176,37 @@ const InnovationPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 relative z-10">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Innovation & Technology
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Cutting-edge technology solutions that propel your business forward. From custom software to mobile apps, we transform your digital vision into reality.
-          </p>
-          <Link 
-            to="/#contact"
-            className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
-          >
-            Start Your Project
-          </Link>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            {/* Text Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Innovation & Technology
+                </span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl lg:max-w-none">
+                Cutting-edge technology solutions that propel your business forward. From custom software to mobile apps, we transform your digital vision into reality.
+              </p>
+              <Link 
+                to="/#contact"
+                className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
+              >
+                Start Your Project
+              </Link>
+            </div>
+
+            {/* Phone Mockup */}
+            <div className="flex-1 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-sm lg:max-w-md">
+                <img 
+                  src="/phone_mockup.png" 
+                  alt="img" 
+                  className="w-full h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

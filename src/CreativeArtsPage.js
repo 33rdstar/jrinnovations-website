@@ -182,21 +182,38 @@ const CreativeArtsPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 relative z-10">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
-              Creative Arts & Design
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Stunning visual designs that capture attention and communicate your brand's unique story. From logos to marketing materials, we bring your vision to life.
-          </p>
-          <Link 
-            to="/#contact"
-            className="inline-block bg-gradient-to-r from-pink-600 to-orange-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
-          >
-            Start Your Design Project
-          </Link>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            {/* Text Content */}
+            <div className="flex-1 text-center lg:text-left">
+              <h1 className="text-5xl md:text-6xl font-bold mb-6">
+                <span className="bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+                  Creative Arts & Design
+                </span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                Stunning visual designs that capture attention and communicate your brand's unique story. From logos to marketing materials, we bring your vision to life.
+              </p>
+              <Link
+                to="/#contact"
+                className="inline-block bg-gradient-to-r from-pink-600 to-orange-600 text-white px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
+              >
+                Start Your Design Project
+              </Link>
+
+            </div>
+
+            {/* Brochure Mockup */}
+            <div className="flex-1 flex justify-center lg:justify-end">
+              <div className="relative w-full max-w-sm lg:max-w-md">
+                <img
+                  src="/Brochure_Mockup2.png"
+                  alt="img"
+                  className="w-full h-auto drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -207,8 +224,8 @@ const CreativeArtsPage = () => {
             {services.map((service, index) => {
               const colors = colorVariants[service.color];
               return (
-                <div 
-                  key={service.id} 
+                <div
+                  key={service.id}
                   id={service.id}
                   className="scroll-mt-24"
                 >
@@ -251,7 +268,7 @@ const CreativeArtsPage = () => {
                           <h3 className="text-xl font-bold text-gray-800 mb-3">What You'll Receive:</h3>
                           <div className="flex flex-wrap gap-2">
                             {service.deliverables.map((deliverable, idx) => (
-                              <span 
+                              <span
                                 key={idx}
                                 className={`px-4 py-2 bg-white rounded-full text-sm font-medium ${colors.text} border ${colors.border} ${colors.hover} transition-colors duration-300`}
                               >
@@ -263,7 +280,7 @@ const CreativeArtsPage = () => {
 
                         {/* CTA Button */}
                         <div className="mt-8">
-                          <Link 
+                          <Link
                             to="/#contact"
                             className={`inline-block bg-gradient-to-r ${colors.gradient} text-white px-6 py-3 rounded-full font-semibold hover:shadow-xl transition-all duration-500 transform hover:scale-105`}
                           >
@@ -285,17 +302,17 @@ const CreativeArtsPage = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-white">Ready to Elevate Your Brand?</h2>
           <p className="text-lg text-white mb-8">
-            Let's create stunning visuals that tell your story and connect with your audience. 
+            Let's create stunning visuals that tell your story and connect with your audience.
             Our creative team is ready to bring your vision to life.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
+            <Link
               to="/#contact"
               className="bg-white text-pink-600 px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
             >
               Get Your Design Quote
             </Link>
-            <Link 
+            <Link
               to="/"
               className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1"
             >
