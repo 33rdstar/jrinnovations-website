@@ -5,6 +5,7 @@ import InnovationPage from './InnovationPage';
 import CreativeArtsPage from './CreativeArtsPage';
 import EntertainmentPage from './EntertainmentPage';
 import PageTransition from './PageTransition';
+import AppStore from './AppStore';
 
 const App = () => {
   useEffect(() => {
@@ -24,6 +25,7 @@ const App = () => {
           <Route path="/innovation" element={<InnovationPage />} />
           <Route path="/creative-arts" element={<CreativeArtsPage />} />
           <Route path="/entertainment" element={<EntertainmentPage />} />
+           <Route path="/app-store" element={<AppStore />} />
         </Routes>
       </PageTransition>
     </Router>
