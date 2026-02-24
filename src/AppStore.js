@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Download, AlertCircle, Smartphone, Bell, Clock, Rocket, Shield, Zap, Star } from 'lucide-react';
+import { Download, AlertCircle, Smartphone, Clock, Shield, Zap, Star, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AppStore = () => {
-  const [email, setEmail] = useState('');
-  const [notified, setNotified] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({ isMobile: false, isAndroid: false, isIOS: false });
   const [particles, setParticles] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userAgent = navigator.userAgent;
@@ -16,7 +16,6 @@ const AppStore = () => {
     const isIOS = /iPad|iPhone|iPod/.test(userAgent);
     setDeviceInfo({ isMobile, isAndroid, isIOS });
 
-    // Generate floating particles
     const generated = Array.from({ length: 18 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
@@ -28,14 +27,6 @@ const AppStore = () => {
     }));
     setParticles(generated);
   }, []);
-
-  const handleNotify = (e) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setNotified(true);
-      setEmail('');
-    }
-  };
 
   const features = [
     { icon: '🏠', label: 'Property Search', desc: 'Find homes to rent or buy' },
@@ -66,7 +57,6 @@ const AppStore = () => {
             }}
           />
         ))}
-        {/* Glow blobs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
           style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
@@ -78,8 +68,21 @@ const AppStore = () => {
       {/* Header */}
       <header className="relative z-10 border-b border-white/5"
         style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(147,51,234,0.15) 50%, rgba(236,72,153,0.15) 100%)' }}>
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center gap-5">
-          <img src="/jrlogo.png" alt="JR Logo" className="h-12 w-auto drop-shadow-lg" />
+        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center gap-4">
+
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-300 group flex-shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
+            <span className="text-sm font-medium hidden sm:inline">Back</span>
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-8 bg-white/10 flex-shrink-0" />
+
+          <img src="/jrlogo.png" alt="JR Logo" className="h-12 w-auto drop-shadow-lg flex-shrink-0" />
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">JR App Store</h1>
             <p className="text-white/50 text-sm">Your gateway to amazing apps</p>
@@ -94,17 +97,14 @@ const AppStore = () => {
 
           {/* Yanga Logo with orbital ring */}
           <div className="relative inline-flex items-center justify-center mb-10">
-            {/* Outer orbital ring */}
             <div className="absolute w-52 h-52 rounded-full border border-white/10 animate-spin"
               style={{ animationDuration: '12s' }}>
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-blue-400 shadow-lg shadow-blue-400/60" />
             </div>
-            {/* Inner orbital ring */}
             <div className="absolute w-36 h-36 rounded-full border border-white/10 animate-spin"
               style={{ animationDuration: '8s', animationDirection: 'reverse' }}>
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-purple-400 shadow-lg shadow-purple-400/60" />
             </div>
-            {/* Yanga Logo */}
             <div className="relative w-28 h-28 rounded-3xl overflow-hidden shadow-2xl border border-white/10"
               style={{ boxShadow: '0 0 60px rgba(139,92,246,0.4), 0 0 120px rgba(59,130,246,0.2)' }}>
               <img src="/yangalogo.png" alt="Yanga App" className="w-full h-full object-cover" />
@@ -125,7 +125,7 @@ const AppStore = () => {
             </span>
           </h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed">
-            We're putting the finishing touches on Zambia's most elegant property, marketplace & services app. 
+            We're putting the finishing touches on Zambia's most elegant property, marketplace & services app.
             The wait won't be long.
           </p>
 
@@ -145,46 +145,6 @@ const AppStore = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Notify CTA */}
-        <div className="mb-16 rounded-3xl p-8 sm:p-10 border border-white/10 backdrop-blur-sm relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1), rgba(236,72,153,0.1))' }}>
-          <div className="absolute inset-0 rounded-3xl border border-white/5 pointer-events-none" />
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 mb-3">
-              <Bell className="w-5 h-5 text-pink-400" />
-              <h3 className="text-white font-bold text-xl">Get Notified at Launch</h3>
-            </div>
-            <p className="text-white/50 text-sm">Be the first to download Yanga when it drops.</p>
-          </div>
-          {notified ? (
-            <div className="flex flex-col items-center gap-3 py-4">
-              <div className="w-14 h-14 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                <Rocket className="w-7 h-7 text-green-400" />
-              </div>
-              <p className="text-green-400 font-semibold text-lg">You're on the list! 🎉</p>
-              <p className="text-white/40 text-sm">We'll let you know the moment Yanga launches.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleNotify} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                required
-                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-purple-500/60 focus:bg-white/10 transition-all duration-300 text-sm"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/30 active:scale-95 whitespace-nowrap"
-                style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)' }}
-              >
-                Notify Me
-              </button>
-            </form>
-          )}
         </div>
 
         {/* Device notice (desktop only) */}
@@ -207,6 +167,7 @@ const AppStore = () => {
             <div>
               <p className="text-yellow-300 font-semibold text-sm">iOS Device Detected</p>
               <p className="text-yellow-400/60 text-xs mt-0.5">Yanga will launch on Android first. iOS support is planned for a future release.</p>
+              <p className="text-yellow-400/60 text-xs mt-0.5">For Apple device, get Yanga from the Apple Store.</p>
             </div>
           </div>
         )}
@@ -251,7 +212,7 @@ const AppStore = () => {
         {/* Footer note */}
         <div className="mt-16 text-center">
           <p className="text-white/20 text-xs">
-            © 2025 JR Innovations · Yanga is developed and distributed exclusively through JR App Store
+            © 2026 JR Innovations · Yanga is developed and distributed exclusively through JR App Store
           </p>
         </div>
       </main>

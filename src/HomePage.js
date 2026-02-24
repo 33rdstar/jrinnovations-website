@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MessageCircle } from 'lucide-react';
+import { Mail, Phone, MessageCircle, Download } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import Navigation from './Navigation';
 import Footer from './Footer';
@@ -76,7 +76,7 @@ const HomePage = () => {
             />
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a 
               href="#services" 
               onClick={(e) => handleNavClick(e, 'services')}
@@ -84,6 +84,27 @@ const HomePage = () => {
             >
               Explore Our Services
             </a>
+
+            {/* JR App Store Button */}
+            <Link
+              to="/app-store"
+              className="relative inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-white overflow-hidden group transition-all duration-500 hover:scale-110 hover:-translate-y-1 hover:shadow-2xl"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8, #7c3aed, #db2777)' }}
+            >
+              {/* Shimmer overlay on hover */}
+              <span
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"
+                style={{ background: 'linear-gradient(135deg, #db2777, #7c3aed, #1d4ed8)' }}
+              />
+              <Download className="w-5 h-5 relative z-10 group-hover:animate-bounce" />
+              <span className="relative z-10">Visit JR App Store</span>
+              {/* Pulsing live dot */}
+              <span className="relative z-10 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+              </span>
+            </Link>
+
             <a 
               href="#contact" 
               onClick={(e) => handleNavClick(e, 'contact')}
