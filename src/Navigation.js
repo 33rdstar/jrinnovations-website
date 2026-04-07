@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Download } from 'lucide-react';
+import { ChevronDown, Download, Home, Briefcase, Info, Mail, Store, X, ChevronRight } from 'lucide-react';
 
 const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const location = useLocation();
   const dropdownRef = useRef(null);
-  
-  const isHomePage = location.pathname === '/';
+
+  useEffect(() => {
+    setIsServicesDropdownOpen(false);
+    setMobileServicesOpen(false);
+  }, [location]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,219 +23,152 @@ const Navigation = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setIsMenuOpen(false);
-    setIsServicesDropdownOpen(false);
-  }, [location]);
-
-  const handleNavClick = (e, targetId) => {
-    e.preventDefault();
-    setIsMenuOpen(false);
-    setIsServicesDropdownOpen(false);
-    
-    if (targetId.startsWith('/')) return;
-    
-    const element = document.getElementById(targetId);
-    if (element) {
-      const offset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-    }
-  };
-
   const servicesLinks = [
-    { name: 'Innovation & Technology', path: '/innovation' },
-    { name: 'Creative Arts & Design', path: '/creative-arts' },
-    { name: 'Entertainment & Management', path: '/entertainment' }
+    { name: 'Innovation & Technology', path: '/innovation', color: '#3b82f6' },
+    { name: 'Creative Arts & Design', path: '/creative-arts', color: '#ec4899' },
+    { name: 'Entertainment & Management', path: '/entertainment', color: '#10b981' }
   ];
 
-  const toggleServicesDropdown = () => setIsServicesDropdownOpen(!isServicesDropdownOpen);
-  const handleMobileMenuToggle = () => {
-    setIsMenuOpen(!isMenuOpen);
-    setIsServicesDropdownOpen(false);
-  };
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed w-full bg-white/95 backdrop-blur-sm shadow-md z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex items-center space-x-3 z-50"
-            onClick={() => { setIsMenuOpen(false); setIsServicesDropdownOpen(false); }}
-          >
-            <img src="/just Jr.png" alt="JR Innovations Logo" className="h-16 w-auto" />
-            <div>
-              <div className="font-bold text-gray-800">JR Innovations</div>
-              <div className="text-xs text-gray-600">beyond imagination</div>
-            </div>
-          </Link>
-          
-          {/* Desktop Nav */}
-          <div className="hidden md:flex space-x-8 items-center">
-            <Link to="/" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">
-              Home
+    <>
+      {/* ===== DESKTOP NAV ===== */}
+      <nav className="fixed w-full bg-white/95 backdrop-blur-sm shadow-md z-50 hidden md:block">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <Link to="/" className="flex items-center space-x-3">
+              <img src="/just Jr.png" alt="JR Innovations Logo" className="h-16 w-auto" />
+              <div>
+                <div className="font-bold text-gray-800">JR Innovations</div>
+                <div className="text-xs text-gray-600">beyond imagination</div>
+              </div>
             </Link>
-            
-            {/* Services Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={toggleServicesDropdown}
-                className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110 flex items-center space-x-1"
+
+            <div className="flex space-x-8 items-center">
+              <Link to="/" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">Home</Link>
+
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsServicesDropdownOpen(!isServicesDropdownOpen)}
+                  className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110 flex items-center space-x-1"
+                >
+                  <span>Services</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isServicesDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isServicesDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2">
+                    {servicesLinks.map((service, index) => (
+                      <Link key={index} to={service.path} className="block px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 font-medium" onClick={() => setIsServicesDropdownOpen(false)}>
+                        {service.emoji} {service.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <a href="/#about" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">About</a>
+              <a href="/#contact" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">Contact</a>
+
+              <Link
+                to="/app-store"
+                className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm text-white overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)' }}
               >
-                <span>Services</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isServicesDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isServicesDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-fadeIn">
-                  {servicesLinks.map((service, index) => (
-                    <Link
-                      key={index}
-                      to={service.path}
-                      className="block px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 font-medium"
-                      onClick={() => setIsServicesDropdownOpen(false)}
-                    >
-                      {service.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {isHomePage ? (
-              <>
-                <a href="#about" onClick={(e) => handleNavClick(e, 'about')} className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">
-                  About
-                </a>
-                <a href="#contact" onClick={(e) => handleNavClick(e, 'contact')} className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">
-                  Contact
-                </a>
-              </>
-            ) : (
-              <Link to="/#contact" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">
-                Contact
+                <Download className="w-4 h-4" />
+                <span>JR App Store</span>
+                <span className="flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
               </Link>
-            )}
-
-            {/* ✨ JR App Store Button */}
-            <Link
-              to="/app-store"
-              className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm text-white overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-300"
-              style={{
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)',
-              }}
-            >
-              {/* Animated shimmer */}
-              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background: 'linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6)',
-                }}
-              />
-              <Download className="w-4 h-4 relative z-10 group-hover:animate-bounce" />
-              <span className="relative z-10">JR App Store</span>
-              {/* Glowing dot indicator */}
-              <span className="relative z-10 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-            </Link>
+            </div>
           </div>
+        </div>
+      </nav>
 
-          {/* Mobile menu toggle */}
-          <button className="md:hidden z-50 relative" onClick={handleMobileMenuToggle}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+      {/* ===== MOBILE TOP BAR ===== */}
+      <nav className="fixed top-0 left-0 right-0 z-50 md:hidden" style={{ background: 'rgba(255,255,255,0.97)', boxShadow: '0 2px 20px rgba(0,0,0,0.08)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+            <img src="/just Jr.png" alt="JR Innovations Logo" style={{ height: '48px', width: 'auto' }} />
+            <div>
+              <div style={{ fontWeight: 'bold', color: '#1f2937', fontSize: '14px' }}>JR Innovations</div>
+              <div style={{ fontSize: '11px', color: '#6b7280' }}>beyond imagination</div>
+            </div>
+          </a>
+          <a href="/app-store" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '20px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)', color: 'white', textDecoration: 'none', fontSize: '12px', fontWeight: '600' }}>
+            <Download size={14} />
+            App Store
+          </a>
+        </div>
+
+        {/* Services expandable panel */}
+        {mobileServicesOpen && (
+          <div style={{ background: '#e6eeff', borderTop: '1px solid #f3f4f6', padding: '8px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 12px' }}>
+              <span style={{ fontWeight: '700', color: '#374151', fontSize: '15px' }}>Our Services</span>
+              <button onClick={() => setMobileServicesOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={20} />
+              </button>
+            </div>
+            {servicesLinks.map((service, index) => (
+              <a
+                key={index}
+                href={service.path}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', textDecoration: 'none', borderTop: index > 0 ? '1px solid #f9fafb' : 'none' }}
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${service.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
+                  {service.emoji}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: '600', color: '#1f2937', fontSize: '14px' }}>{service.name}</div>
+                </div>
+                <ChevronRight size={16} style={{ color: '#9ca3af' }} />
+              </a>
+            ))}
+          </div>
+        )}
+      </nav>
+
+      {/* ===== MOBILE BOTTOM NAV ===== */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50" style={{ background: 'rgba(255,255,255,0.97)', boxShadow: '0 -2px 20px rgba(0,0,0,0.1)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '8px 0' }}>
+
+          <a href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: isActive('/') ? '#f3f0ff' : 'transparent' }}>
+            <Home size={22} style={{ color: isActive('/') ? '#7c3aed' : '#6b7280' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: isActive('/') ? '#7c3aed' : '#6b7280' }}>Home</span>
+          </a>
+
+          <button
+            onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: mobileServicesOpen ? '#f3f0ff' : 'transparent', border: 'none', cursor: 'pointer' }}
+          >
+            <Briefcase size={22} style={{ color: mobileServicesOpen ? '#7c3aed' : '#6b7280' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: mobileServicesOpen ? '#7c3aed' : '#6b7280' }}>Services</span>
           </button>
+
+          <a href="/#about" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px' }}>
+            <Info size={22} style={{ color: '#6b7280' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: '#6b7280' }}>About</span>
+          </a>
+
+          <a href="/#contact" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px' }}>
+            <Mail size={22} style={{ color: '#6b7280' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: '#6b7280' }}>Contact</span>
+          </a>
+
+          <a href="/app-store" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: isActive('/app-store') ? '#f3f0ff' : 'transparent' }}>
+            <Store size={22} style={{ color: isActive('/app-store') ? '#7c3aed' : '#6b7280' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: isActive('/app-store') ? '#7c3aed' : '#6b7280' }}>App Store</span>
+          </a>
+
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white border-t fixed top-20 left-0 right-0 max-h-[calc(100vh-5rem)] overflow-y-auto shadow-lg">
-          <div className="px-4 py-4 space-y-1">
-            <Link
-              to="/"
-              className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 font-medium transition-all duration-300 py-3 px-2 rounded"
-              onClick={() => { setIsMenuOpen(false); setIsServicesDropdownOpen(false); }}
-            >
-              Home
-            </Link>
-            
-            {/* Mobile Services Dropdown */}
-            <div className="border-b border-gray-100 pb-2">
-              <button
-                onClick={toggleServicesDropdown}
-                className="w-full flex items-center justify-between text-gray-700 hover:text-purple-600 hover:bg-purple-50 font-medium transition-all duration-300 py-3 px-2 rounded"
-              >
-                <span>Services</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isServicesDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isServicesDropdownOpen && (
-                <div className="mt-1 ml-4 space-y-1 bg-gray-50 rounded-lg p-2">
-                  {servicesLinks.map((service, index) => (
-                    <Link
-                      key={index}
-                      to={service.path}
-                      className="block text-gray-600 hover:text-purple-600 hover:bg-white font-medium transition-all duration-300 py-2 px-3 rounded"
-                      onClick={() => { setIsMenuOpen(false); setIsServicesDropdownOpen(false); }}
-                    >
-                      {service.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {isHomePage ? (
-              <>
-                <a href="#about" className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 font-medium transition-all duration-300 py-3 px-2 rounded" onClick={(e) => handleNavClick(e, 'about')}>
-                  About
-                </a>
-                <a href="#contact" className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 font-medium transition-all duration-300 py-3 px-2 rounded" onClick={(e) => handleNavClick(e, 'contact')}>
-                  Contact
-                </a>
-              </>
-            ) : (
-              <Link
-                to="/#contact"
-                className="block text-gray-700 hover:text-purple-600 hover:bg-purple-50 font-medium transition-all duration-300 py-3 px-2 rounded"
-                onClick={() => { setIsMenuOpen(false); setIsServicesDropdownOpen(false); }}
-              >
-                Contact
-              </Link>
-            )}
-
-            {/* ✨ Mobile JR App Store Button */}
-            <Link
-              to="/app-store"
-              className="flex items-center gap-2 px-4 py-3 rounded-xl font-semibold text-white mt-2 transition-all duration-300 active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)' }}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Download className="w-5 h-5" />
-              <span>JR App Store</span>
-              <span className="ml-auto flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-            </Link>
-          </div>
-        </div>
-      )}
-      
-      <style jsx="true">{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-      `}</style>
-    </nav>
+      {/* Spacer for bottom nav on mobile */}
+      <div className="md:hidden" style={{ height: '65px' }}></div>
+    </>
   );
 };
 

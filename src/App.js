@@ -6,12 +6,11 @@ import CreativeArtsPage from './CreativeArtsPage';
 import EntertainmentPage from './EntertainmentPage';
 import PageTransition from './PageTransition';
 import AppStore from './AppStore';
+import Navigation from './Navigation';
 
 const App = () => {
   useEffect(() => {
-    // Add smooth scroll behavior globally
     document.documentElement.style.scrollBehavior = 'smooth';
-    
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
@@ -19,13 +18,14 @@ const App = () => {
 
   return (
     <Router>
+      <Navigation />
       <PageTransition>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/innovation" element={<InnovationPage />} />
           <Route path="/creative-arts" element={<CreativeArtsPage />} />
           <Route path="/entertainment" element={<EntertainmentPage />} />
-           <Route path="/app-store" element={<AppStore />} />
+          <Route path="/app-store" element={<AppStore />} />
         </Routes>
       </PageTransition>
     </Router>
