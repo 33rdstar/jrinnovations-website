@@ -1,7 +1,7 @@
-'use client'
-
 import React, { useState, useEffect } from 'react';
 import { Star, Download, AlertCircle, Smartphone, Shield, Zap, Lightbulb, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from './Config/firebaseConfig'; // adjust path
 
 const AppStore = () => {
   const [errorMessage, setErrorMessage] = useState(null);
@@ -169,13 +169,16 @@ const AppStore = () => {
       // Show success alert
       alert('📱 Download started! Check your downloads folder or notification bar. You may need to enable "Install from Unknown Sources" in your Android settings.');
 
-      // Optional: Track download analytics
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'app_download', {
-          'app_name': app.name,
-          'app_version': app.version
-        });
-      }
+		try {
+		  logEvent(analytics, 'app_download', {
+		  app_name: app.name,
+		  app_version: app.version,
+		  device_type: deviceInfo.isAndroid ? 'android' : 'other',
+		  app_size: app.size,
+		});
+		} catch (err) {
+		  console.error('Analytics error:', err);
+		}
 
     } catch (error) {
       console.error('Download failed:', error);
