@@ -13,11 +13,13 @@ import Navigation from './Navigation';
 
 // Admin Guards
 import ProtectedRoute from './Auth/ProtectedRoute';
+import OfficerRoute from './Auth/OfficerRoute';
 
 // Lazy Load Admin Pages (Only downloads if the user visits the route)
 const AdminLogin = lazy(() => import('./Auth/AdminLogin'));
 const AdminLayout = lazy(() => import('./admin/layout/AdminLayout'));
-const UsersManager = lazy(() => import('./admin/UsersManager'));
+const UserManagerComponent = lazy(() => import('./admin/UserManagerComponent'));
+const ListingsPage = lazy(() => import('./admin/ListingsManager'));
 
 const App = () => {
   useEffect(() => {
@@ -62,8 +64,11 @@ const App = () => {
             </ProtectedRoute>
           }>
             {/* Nested Admin Pages */}
-            <Route path="users" element={<UsersManager />} />
+            <Route path="users" element={<UserManagerComponent />} />
             {/* Add more routes here like <Route path="queries" element={<QueriesManager />} /> */}
+            <Route path="listings" element={
+			  <ListingsPage />
+			} />
           </Route>
         </Routes>
       </Router>

@@ -14,31 +14,29 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
 	const [currentUser, setCurrentUser] = useState(null);
 	const [isManager, setIsManager] = useState(false);
+	const [userRole, setUserRole] = useState(true);
 	const [loading, setLoading] = useState(true);
-	const [roleLoading, setRoleLoading] = useState(true); // add this
+	const [roleLoading, setRoleLoading] = useState(true); 
 
   useEffect(() => {
 	const unsubscribe = onAuthStateChanged(auth, async (user) => {
-	  //console.log("[AUTH] onAuthStateChanged fired, user:", user?.email ?? "null");
-	  //console.log("[AUTH] Looking up UID:", user.uid);
+
 	  
 	  if (user) {
 		setCurrentUser(user);
 		try {
-		  const userDoc = await getDoc(doc(db, 'users', user.uid));
-		  //console.log("[AUTH] Firestore doc exists:", userDoc.exists());
-		  //console.log("[AUTH] Firestore doc data:", userDoc.data());
-		  //console.log("[AUTH] Role found:", userDoc.data()?.role);
-		  
-		  const managerStatus = userDoc.exists() && userDoc.data().role === 'manager';
-		  //console.log("[AUTH] Setting isManager to:", managerStatus);
-		  setIsManager(managerStatus);
+			const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+			const role = userDoc.data()?.role ?? 'customer';
+			setUserRole(role);
+			setIsManager(role === 'manager');
+			console.log(userDoc.data())
 		} catch (error) {
-		  //console.error("[AUTH] Firestore error:", error);
+		
 		  setIsManager(false);
 		}
 	  } else {
-		//console.log("[AUTH] No user, clearing state");
+
 		setCurrentUser(null);
 		setIsManager(false);
 	  }
