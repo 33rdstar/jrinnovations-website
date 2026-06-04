@@ -7,6 +7,7 @@ import EntertainmentPage from './EntertainmentPage';
 import PageTransition from './PageTransition';
 import AppStore from './AppStore';
 import Navigation from './Navigation';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const App = () => {
   useEffect(() => {
@@ -26,6 +27,7 @@ const App = () => {
           <Route path="/creative-arts" element={<CreativeArtsPage />} />
           <Route path="/entertainment" element={<EntertainmentPage />} />
           <Route path="/app-store" element={<AppStore />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         </Routes>
       </PageTransition>
     </Router>
