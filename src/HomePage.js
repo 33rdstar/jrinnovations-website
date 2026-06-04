@@ -181,7 +181,7 @@ const HomePage = () => {
             <img
               src="/laptop-mockup2.png"
               alt="Yanga app preview"
-              fetchpriority="high"
+              fetchPriority="high"
               decoding="async"
               width="672"
               height="420"

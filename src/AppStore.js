@@ -1,7 +1,10 @@
+import React, { useState, useEffect } from 'react';
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Star, Download, AlertCircle, Smartphone, Shield, Zap, Lightbulb, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from './Config/firebaseConfig'; // adjust path
 
 // ─── Hook: lazy section with IntersectionObserver ───────────────────────────
 const useLazySection = (options = {}) => {
@@ -362,6 +365,17 @@ const AppStore = () => {
       setTimeout(() => document.body.removeChild(downloadLink), 100);
 
       alert('📱 Download started! Check your downloads folder or notification bar. You may need to enable "Install from Unknown Sources" in your Android settings.');
+
+		try {
+		  logEvent(analytics, 'app_download', {
+		  app_name: app.name,
+		  app_version: app.version,
+		  device_type: deviceInfo.isAndroid ? 'android' : 'other',
+		  app_size: app.size,
+		});
+		} catch (err) {
+		  console.error('Analytics error:', err);
+		}
 
     } catch (error) {
       console.error('Download failed:', error);
