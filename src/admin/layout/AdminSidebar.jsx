@@ -22,8 +22,8 @@ const handleLogout = async () => {
 const navItems = [
   { path: 'users', icon: <Users size={20} />, label: 'Manage Users', available: true },
   { path: 'listings', icon: <Home size={20} />, label: 'Real Estate', available: true },
-  { path: 'marketplace', icon: <ShoppingBag size={20} />, label: 'Marketplace', available: false },
-  { path: 'queries', icon: <MessageSquare size={20} />, label: 'Customer Service', available: false },
+  { path: 'marketplace', icon: <ShoppingBag size={20} />, label: 'Marketplace', available: true },
+  { path: 'queries', icon: <MessageSquare size={20} />, label: 'Customer Service', available: true },
 ];
   
 
