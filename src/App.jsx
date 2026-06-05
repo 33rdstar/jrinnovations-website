@@ -20,6 +20,10 @@ const AdminLogin = lazy(() => import('./Auth/AdminLogin'));
 const AdminLayout = lazy(() => import('./admin/layout/AdminLayout'));
 const UserManagerComponent = lazy(() => import('./admin/UserManagerComponent'));
 const ListingsPage = lazy(() => import('./admin/ListingsManager'));
+const MarketplaceManager = lazy(() => import('./admin/MarketplaceManager'));
+const CustomerService = lazy(() => import('./admin/CustomerService'));
+
+
 
 const App = () => {
   useEffect(() => {
@@ -69,6 +73,8 @@ const App = () => {
             <Route path="listings" element={
 			  <ListingsPage />
 			} />
+			<Route path="marketplace" element={<MarketplaceManager />} />
+			<Route path="queries" element={<CustomerService />} />
           </Route>
         </Routes>
       </Router>
