@@ -23,6 +23,7 @@ exports.createBackOfficer = onCall(async (request) => {
     nrcNumber,
     gender,
     otp,
+    zieaNumber,
   } = request.data;
   const callerUid = request.auth?.uid;
 
@@ -72,6 +73,7 @@ exports.createBackOfficer = onCall(async (request) => {
     gender: gender || "Prefer not to say",
     role: "officer", // Restricted role — only Listings page
     // Flipped to true on first login (see OfficerAuthGuard)
+    zieaNumber: zieaNumber || null,
     hasLoggedIn: false,
     blacklisted: false,
     createdAt: new Date().toISOString(),

@@ -29,6 +29,7 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
     email: '',
     phoneNumber: '',
     nrcNumber: '',
+    zieaNumber: '',
     gender: GENDERS[0],
   });
   const [otp, setOtp] = useState(generateOTP());
@@ -153,7 +154,12 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
               <input {...field('nrcNumber')} placeholder="000000/00/0"
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
             </div>
-            <div className="col-span-2">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">ZIEA Number</label>
+              <input {...field('zieaNumber')} placeholder="e.g. ZIEA/2024/0042"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
               <select {...field('gender')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm">

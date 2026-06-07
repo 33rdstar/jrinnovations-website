@@ -6,9 +6,10 @@ import {
 import { db } from "../Config/firebaseConfig";
 import {
   collection, getDocs, doc, updateDoc, getDoc,
-  addDoc, serverTimestamp, query, orderBy,
+  addDoc, setDoc, serverTimestamp, query, orderBy,
 } from "firebase/firestore";
 import { useAuth } from "../Auth/AuthContext";
+
 
 // ── Constants ─────────────────────────────────────────────────────
 
@@ -223,6 +224,27 @@ const CustomerService = () => {
     try {
       await updateDoc(doc(db, "queries", id), updates);
       setQueries((prev) => prev.map((q) => q.id === id ? { ...q, ...updates } : q));
+
+      // If there's a reply, upsert a single notification doc keyed by queryId
+      // Using setDoc with the queryId as the doc ID prevents duplicates —
+      // re-saving just overwrites the same document instead of creating a new one.
+      if (updates.adminReply) {
+        const q = queries.find((item) => item.id === id);
+        if (q?.userId) {
+          await setDoc(
+            doc(db, "users", q.userId, "notifications", id), // id = queryId, always same doc
+            {
+              type:         "reply",
+              subject:      q.subject || "Your query",
+              message:      updates.adminReply,
+              queryId:      id,
+              read:         false,          // reset to unread whenever admin updates reply
+              createdAt:    serverTimestamp(),
+            },
+            { merge: true }                 // merge so we don't wipe future fields
+          );
+        }
+      }
     } catch (err) { console.error(err); }
   };
 

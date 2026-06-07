@@ -264,7 +264,7 @@ const Detail = ({ label, value }) => (
 
 // ── Main Component ────────────────────────────────────────────────
 const ListingsManager = () => {
-  const { isManager, currentUser } = useAuth();
+  const { isManager, currentUser } = useAuth();  // currentUser needed for verifiedBy stamp
   const [listings, setListings] = useState([]);
   const [listers, setListers] = useState({}); // uid → user doc
   const [loading, setLoading] = useState(true);
@@ -321,12 +321,33 @@ const ListingsManager = () => {
 
   const handleStatusChange = async (listingId, newStatus) => {
     try {
-      await updateDoc(doc(db, "houses", listingId), { status: newStatus });
+      const updates = { status: newStatus };
+
+      // When verifying, stamp the officer's info onto the listing doc
+      if (newStatus === "verified") {
+        const officerDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (officerDoc.exists()) {
+          const o = officerDoc.data();
+          updates.verifiedBy     = currentUser.uid;
+          updates.verifiedByName = o.name || o.username || "Officer";
+          updates.zieaNumber     = o.zieaNumber || null;
+          updates.verifiedAt     = new Date().toISOString();
+        }
+      }
+
+      // If changing away from verified, clear the verification stamp
+      if (newStatus !== "verified") {
+        updates.verifiedBy     = null;
+        updates.verifiedByName = null;
+        updates.zieaNumber     = null;
+        updates.verifiedAt     = null;
+      }
+
+      await updateDoc(doc(db, "houses", listingId), updates);
       setListings((prev) =>
-        prev.map((l) => l.id === listingId ? { ...l, status: newStatus } : l)
+        prev.map((l) => l.id === listingId ? { ...l, ...updates } : l)
       );
-      // Also update selected so modal reflects change immediately
-      setSelected((prev) => prev ? { ...prev, status: newStatus } : prev);
+      setSelected((prev) => prev ? { ...prev, ...updates } : prev);
     } catch (err) {
       console.error("Error updating status:", err);
     }
