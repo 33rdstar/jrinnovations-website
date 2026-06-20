@@ -1,13 +1,12 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Users, Home, ShoppingBag, MessageSquare, LogOut } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Users, Home, ShoppingBag, MessageSquare, LogOut, Landmark } from 'lucide-react';
 import { useAuth } from '../../Auth/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const AdminSidebar = () => {
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
   const navigate = useNavigate();
-
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -19,11 +18,27 @@ const AdminSidebar = () => {
   };
 
   const navItems = [
-    { path: 'users',       icon: <Users size={18} />,       label: 'Manage users',    section: 'Management' },
-    { path: 'listings',    icon: <Home size={18} />,        label: 'Real estate',     section: null },
-    { path: 'marketplace', icon: <ShoppingBag size={18} />, label: 'Marketplace',     section: null },
-    { path: 'queries',     icon: <MessageSquare size={18} />, label: 'Customer service', section: 'Support' },
+    { path: 'users',       icon: <Users size={18} />,       label: 'Manage users',    section: 'Management', allowedUsers: ['manager','admin', 'registration_officer', 'customer_care'] },
+    { path: 'listings',    icon: <Home size={18} />,        label: 'Real estate',     section: null, allowedUsers: ['manager', 'admin', 'customer_care'] },
+    { path: 'marketplace', icon: <ShoppingBag size={18} />, label: 'Marketplace',     section: null, allowedUsers: ['manager','admin', 'customer_care'] },
+    { path: 'audits',      icon: <Landmark size={18} />,    label: 'Treasury',        section: null, allowedUsers: ['manager','admin', 'auditor'] },
+    { path: 'queries',     icon: <MessageSquare size={18} />, label: 'Customer service', section: 'Support', allowedUsers: ['manager','admin', 'customer_care'] },
   ];
+
+  // Only show nav items this role is allowed to see
+  const visibleItems = navItems.filter(item => !item.allowedUsers || item.allowedUsers.includes(userRole));
+  const defaultPath = visibleItems[0]?.path;
+
+  // Abstraction guard: if this role lands on (or types in) a route they
+  // can't see in the sidebar, silently send them to their own default tab
+  // instead of exposing a 403/404 that confirms the page exists.
+  useEffect(() => {
+    const currentSegment = location.pathname.replace('/portal-mgmt-xyz99/', '').split('/')[0];
+    const isAllowed = visibleItems.some(item => item.path === currentSegment);
+    if (!isAllowed && defaultPath) {
+      navigate(`/portal-mgmt-xyz99/${defaultPath}`, { replace: true });
+    }
+  }, [location.pathname, userRole]);
 
   return (
     <div className="w-60 h-screen flex flex-col fixed"
@@ -54,7 +69,7 @@ const AdminSidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
-        {navItems.map((item, idx) => (
+        {visibleItems.map((item) => (
           <React.Fragment key={item.path}>
             {item.section && (
               <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.9px',
