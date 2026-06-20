@@ -22,7 +22,7 @@ const UserManagerComponent = lazy(() => import('./admin/UserManagerComponent'));
 const ListingsPage = lazy(() => import('./admin/ListingsManager'));
 const MarketplaceManager = lazy(() => import('./admin/MarketplaceManager'));
 const CustomerService = lazy(() => import('./admin/CustomerService'));
-
+const AdminTransactions = lazy(() => import('./admin/AdminTransactions'));
 
 
 const App = () => {
@@ -74,6 +74,7 @@ const App = () => {
 			  <ListingsPage />
 			} />
 			<Route path="marketplace" element={<MarketplaceManager />} />
+			<Route path="audits" element={<AdminTransactions />} />
 			<Route path="queries" element={<CustomerService />} />
           </Route>
         </Routes>
