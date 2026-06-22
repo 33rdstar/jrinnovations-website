@@ -5,14 +5,19 @@ const {getFirestore} = require("firebase-admin/firestore");
 
 initializeApp();
 
+// Roles allowed to create officer accounts. Using .includes() instead of
+// chained !== / || comparisons avoids the bug where a role can only ever
+// match ONE of several values, making an OR-of-negations always true.
+const ALLOWED_CREATOR_ROLES = ["admin", "manager", "registration_officer"];
+
 /**
  * createBackOfficer
  * Called from the admin frontend to create a restricted officer account.
  *
  * What it does:
- * 1. Verifies the caller is a manager (role check in Firestore)
+ * 1. Verifies the caller's role is allowed to create officers (Firestore)
  * 2. Creates a Firebase Auth user with the OTP as the initial password
- * 3. Writes the user doc to /users/{uid} with role: 'officer'
+ * 3. Writes the user doc to /users/{uid} with the assigned role
  * 4. Returns the new officer's data to the client
  */
 exports.createBackOfficer = onCall(async (request) => {
@@ -22,6 +27,7 @@ exports.createBackOfficer = onCall(async (request) => {
     phoneNumber,
     nrcNumber,
     gender,
+    role,
     otp,
     zieaNumber,
   } = request.data;
@@ -37,15 +43,17 @@ exports.createBackOfficer = onCall(async (request) => {
 
   const db = getFirestore();
   const callerDoc = await db.collection("users").doc(callerUid).get();
-  if (!callerDoc.exists || callerDoc.data().role !== "manager") {
+  const callerRole = callerDoc.exists ? callerDoc.data().role : null;
+
+  if (!ALLOWED_CREATOR_ROLES.includes(callerRole)) {
     throw new HttpsError(
         "permission-denied",
-        "Only managers can create officers.",
+        "You do not have permission to create officer accounts.",
     );
   }
 
   // ── Validation ────────────────────────────────────────────────
-  if (!name || !email || !phoneNumber || !nrcNumber || !otp) {
+  if (!name || !email || !phoneNumber || !nrcNumber || !otp || !role) {
     throw new HttpsError(
         "invalid-argument",
         "Missing required fields.",
@@ -71,10 +79,10 @@ exports.createBackOfficer = onCall(async (request) => {
     phoneNumber,
     nrcNumber,
     gender: gender || "Prefer not to say",
-    role: "officer", // Restricted role — only Listings page
-    // Flipped to true on first login (see OfficerAuthGuard)
+    role: role, // Restricted role — only Listings page
     zieaNumber: zieaNumber || null,
     hasLoggedIn: false,
+    resetPassword: true, // Forces the reset-password screen on first login
     blacklisted: false,
     createdAt: new Date().toISOString(),
     createdBy: callerUid,

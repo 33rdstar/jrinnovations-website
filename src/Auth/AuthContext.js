@@ -13,7 +13,8 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isManager, setIsManager]     = useState(false);
-  const [userRole, setUserRole]       = useState(null); // was `true` — start unresolved, not a boolean
+  const [userRole, setUserRole]       = useState(null);
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
   const [loading, setLoading]         = useState(true);
   const [roleLoading, setRoleLoading] = useState(true);
 
@@ -24,20 +25,24 @@ export const AuthProvider = ({ children }) => {
         setRoleLoading(true);
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
-          const role = userDoc.data()?.role ?? 'customer';
+          const data = userDoc.data();
+          const role = data?.role ?? 'customer';
           setUserRole(role);
           setIsManager(role === 'manager');
+          setNeedsPasswordReset(data?.resetPassword === true);
         } catch (error) {
           console.error('Failed to fetch user role:', error);
           setUserRole('customer');
           setIsManager(false);
+          setNeedsPasswordReset(false);
         } finally {
-          setRoleLoading(false); // was never called before — this was stuck at `true` forever
+          setRoleLoading(false);
         }
       } else {
         setCurrentUser(null);
         setUserRole(null);
         setIsManager(false);
+        setNeedsPasswordReset(false);
         setRoleLoading(false);
       }
       setLoading(false);
@@ -48,8 +53,22 @@ export const AuthProvider = ({ children }) => {
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
   const logout = () => signOut(auth);
 
-  // userRole is now actually exposed — this was the missing piece
-  const value = { currentUser, userRole, isManager, login, logout, loading, roleLoading };
+  // Lets the reset-password page tell context "I'm done" immediately,
+  // instead of waiting for onAuthStateChanged to fire again (which it
+  // won't, until the next reload or login).
+  const clearPasswordResetFlag = () => setNeedsPasswordReset(false);
+
+  const value = {
+    currentUser,
+    userRole,
+    isManager,
+    needsPasswordReset,
+    clearPasswordResetFlag,
+    login,
+    logout,
+    loading,
+    roleLoading,
+  };
 
   return (
     <AuthContext.Provider value={value}>

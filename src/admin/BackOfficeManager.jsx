@@ -22,6 +22,21 @@ const generateOTP = () => {
 
 const GENDERS = ['Male', 'Female', 'Prefer not to say'];
 
+// Single source of truth for assignable back-office roles. Both the
+// create-officer dropdown AND the query that lists existing officers
+// below read from this same array, so adding a role here updates both
+// places instead of risking them silently drifting apart.
+const OFFICER_ROLES = [
+  { value: 'registration_officer', label: 'Registration Officer' },
+  { value: 'customer_care',        label: 'Customer Care' },
+  { value: 'auditor',              label: 'Auditor' },
+
+//  { value: 'admin',                label: 'Admin' },
+//  { value: 'manager',              label: 'Manager' },
+];
+
+const roleLabel = (value) => OFFICER_ROLES.find((r) => r.value === value)?.label || value || 'N/A';
+
 // ── Create Officer Modal ──────────────────────────────────────────
 const CreateOfficerModal = ({ onClose, onCreated }) => {
   const [form, setForm] = useState({
@@ -30,6 +45,7 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
     phoneNumber: '',
     nrcNumber: '',
     zieaNumber: '',
+    role: '',
     gender: GENDERS[0],
   });
   const [otp, setOtp] = useState(generateOTP());
@@ -50,8 +66,8 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
   };
 
   const handleCreate = async () => {
-    const { name, email, phoneNumber, nrcNumber } = form;
-    if (!name || !email || !phoneNumber || !nrcNumber) {
+    const { name, email, phoneNumber, nrcNumber, role } = form;
+    if (!name || !email || !phoneNumber || !nrcNumber || !role) {
       setError('All fields are required.');
       return;
     }
@@ -78,6 +94,7 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
         email,
         phoneNumber,
         nrcNumber,
+        role,
         gender: form.gender,
         otp,          // Cloud Function sets this as the initial password
       });
@@ -160,6 +177,16 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Officer Role</label>
+              <select {...field('role')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm">
+                <option value="" disabled>Select a role…</option>
+                {OFFICER_ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
               <select {...field('gender')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm">
@@ -194,7 +221,12 @@ const BackOfficersManager = () => {
 
   const fetchOfficers = async () => {
     try {
-      const q = query(collection(db, 'users'), where('role', '==', 'officer'));
+      // Matches whatever roles are assignable in the dropdown above.
+      // Previously this filtered for the literal string 'officer', which
+      // none of these actual role values ever equal — so nothing created
+      // through this form would ever have shown up here.
+      const roleValues = OFFICER_ROLES.map((r) => r.value);
+      const q = query(collection(db, 'users'), where('role', 'in', roleValues));
       const snap = await getDocs(q);
       setOfficers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     } catch (err) {
@@ -258,6 +290,7 @@ const BackOfficersManager = () => {
                 <th className="p-4 font-semibold">Email</th>
                 <th className="p-4 font-semibold">NRC</th>
                 <th className="p-4 font-semibold">Mobile</th>
+                <th className="p-4 font-semibold">Position</th>
                 <th className="p-4 font-semibold">Gender</th>
                 <th className="p-4 font-semibold">First Login</th>
                 <th className="p-4 font-semibold text-right">Actions</th>
@@ -270,6 +303,7 @@ const BackOfficersManager = () => {
                   <td className="p-4 text-gray-600">{o.email}</td>
                   <td className="p-4 text-gray-600">{o.nrcNumber || 'N/A'}</td>
                   <td className="p-4 text-gray-600">{o.phoneNumber || 'N/A'}</td>
+                  <td className="p-4 text-gray-600">{roleLabel(o.role)}</td>
                   <td className="p-4 text-gray-600">{o.gender || 'N/A'}</td>
                   <td className="p-4">
                     {o.hasLoggedIn ? (

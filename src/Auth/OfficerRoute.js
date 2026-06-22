@@ -4,6 +4,11 @@ import { useAuth } from './AuthContext';
 import { db } from '../Config/firebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
 
+// Roles considered "officers" for this guard. This lives separately from
+// the OFFICER_ROLES array in BackOfficeManager.jsx (different folder) —
+// if you add or rename a role in one, check the other too.
+const OFFICER_ROLES = ['registration_officer', 'customer_care', 'auditor'];
+
 /**
  * OfficerRoute
  * Wraps pages that only officers (and managers) can access.
@@ -13,20 +18,22 @@ import { doc, updateDoc } from 'firebase/firestore';
  */
 const OfficerRoute = ({ children }) => {
   const { currentUser, loading, userRole } = useAuth();
+  const isOfficer = OFFICER_ROLES.includes(userRole);
+  const isAllowed = isOfficer || userRole === 'manager';
 
   useEffect(() => {
-    if (!currentUser || userRole !== 'officer') return;
+    if (!currentUser || !isOfficer) return;
 
     // Mark first login (fire-and-forget, no need to await)
     const userRef = doc(db, 'users', currentUser.uid);
     updateDoc(userRef, { hasLoggedIn: true }).catch(console.error);
-  }, [currentUser, userRole]);
+  }, [currentUser, isOfficer]);
 
   if (loading) return <div>Loading…</div>;
-  if (!currentUser) return <Navigate to="/login" replace />;
+  if (!currentUser) return <Navigate to="/portal-mgmt-xyz99/login" replace />;
 
   // Officers and managers can access; everyone else is redirected
-  if (userRole !== 'officer' || userRole !== 'manager') {
+  if (!isAllowed) {
     return <Navigate to="/" replace />;
   }
 

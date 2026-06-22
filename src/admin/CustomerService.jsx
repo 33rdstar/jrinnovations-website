@@ -9,6 +9,7 @@ import {
   addDoc, setDoc, serverTimestamp, query, orderBy, onSnapshot,
 } from "firebase/firestore";
 import { useAuth } from "../Auth/AuthContext";
+import { UserDetailView } from "./UsersManager";
 
 // ── Constants ─────────────────────────────────────────────────────
 const QUERY_TYPES = [
@@ -62,11 +63,15 @@ const MsgBubble = ({ msg, isAdmin }) => (
 );
 
 // ── Thread Modal ──────────────────────────────────────────────────
-const ThreadModal = ({ ticket, submitter, onClose, onStatusChange, adminUser }) => {
+const ThreadModal = ({
+  ticket, submitter, onClose, onStatusChange, adminUser,
+  onSubmitterBlacklisted, onSubmitterDeleted,
+}) => {
   const [messages, setMessages] = useState([]);
   const [reply, setReply]       = useState("");
   const [saving, setSaving]     = useState(false);
   const [status, setStatus]     = useState(ticket.status || "open");
+  const [viewingUser, setViewingUser] = useState(false);
   const bottomRef = React.useRef(null);
   const tM = typeMeta(ticket.type);
   const sM = statusMeta(status);
@@ -144,107 +149,127 @@ const ThreadModal = ({ ticket, submitter, onClose, onStatusChange, adminUser }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col border-t-4 border-indigo-500">
+    <>
+      <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col border-t-4 border-indigo-500">
 
-        {/* Header */}
-        <div className="flex justify-between items-start px-5 py-4 border-b border-gray-100">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${tM.color}`}>
-                {tM.icon}{tM.label}
-              </span>
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${sM.color}`}>
-                {sM.icon}{sM.label}
-              </span>
+          {/* Header */}
+          <div className="flex justify-between items-start px-5 py-4 border-b border-gray-100">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${tM.color}`}>
+                  {tM.icon}{tM.label}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${sM.color}`}>
+                  {sM.icon}{sM.label}
+                </span>
+              </div>
+              <h3 className="text-base font-bold text-gray-800">{ticket.subject || "No Subject"}</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Opened {fmtDate(ticket.createdAt)}</p>
             </div>
-            <h3 className="text-base font-bold text-gray-800">{ticket.subject || "No Subject"}</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Opened {fmtDate(ticket.createdAt)}</p>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-        </div>
 
-        {/* Submitter */}
-        {submitter && (
-          <div className="px-5 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3 text-sm">
-            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
-              {(submitter.username || submitter.email || "U")[0].toUpperCase()}
-            </div>
-            <span className="text-gray-600">
-              <span className="font-semibold">{submitter.username || "User"}</span>
-              {" · "}{submitter.email}
-              {submitter.phoneNumber && ` · ${submitter.phoneNumber}`}
-            </span>
-          </div>
-        )}
-
-        {/* Thread */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* Original message card */}
-          {ticket.message && (
-            <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm text-gray-600 border border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Original Message</p>
-              <p className="whitespace-pre-line">{ticket.message}</p>
-            </div>
-          )}
-          {messages.map(msg => (
-            <MsgBubble key={msg.id} msg={msg} isAdmin={msg.senderRole === "admin"} />
-          ))}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Status selector */}
-        <div className="px-5 py-2 border-t border-gray-100 flex gap-2">
-          {STATUSES.map(s => (
+          {/* Submitter — click to open full user details */}
+          {submitter && (
             <button
-              key={s.key}
-              onClick={() => setStatus(s.key)}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border transition-all
-                ${status === s.key ? `${s.color} border-transparent` : "bg-white border-gray-300 text-gray-500 hover:border-gray-400"}`}
+              onClick={() => setViewingUser(true)}
+              className="w-full px-5 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3 text-sm hover:bg-gray-100 transition-colors text-left"
+              title="View user details"
             >
-              {s.icon}{s.label}
-            </button>
-          ))}
-          {ticket.status !== "resolved" && (
-            <button
-              onClick={handleClose}
-              disabled={saving}
-              className="ml-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white hover:bg-green-600 transition-all disabled:opacity-50"
-            >
-              <CheckCircle size={12} /> Close Ticket
+              <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+                {(submitter.username || submitter.email || "U")[0].toUpperCase()}
+              </div>
+              <span className="text-gray-600">
+                <span className="font-semibold">{submitter.username || "User"}</span>
+                {" · "}{submitter.email}
+                {submitter.phoneNumber && ` · ${submitter.phoneNumber}`}
+              </span>
             </button>
           )}
-        </div>
 
-        {/* Reply input */}
-        {ticket.status !== "resolved" && (
-          <div className="px-5 pb-4 pt-2 border-t border-gray-100">
-            <div className="flex gap-2 items-end">
-              <textarea
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                rows={2}
-                placeholder="Type a reply… (Enter to send, Shift+Enter for new line)"
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-              />
+          {/* Thread */}
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {/* Original message card */}
+            {ticket.message && (
+              <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm text-gray-600 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Original Message</p>
+                <p className="whitespace-pre-line">{ticket.message}</p>
+              </div>
+            )}
+            {messages.map(msg => (
+              <MsgBubble key={msg.id} msg={msg} isAdmin={msg.senderRole === "admin"} />
+            ))}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Status selector */}
+          <div className="px-5 py-2 border-t border-gray-100 flex gap-2">
+            {STATUSES.map(s => (
               <button
-                onClick={handleSend}
-                disabled={saving || !reply.trim()}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm transition-all disabled:opacity-50"
+                key={s.key}
+                onClick={() => setStatus(s.key)}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border transition-all
+                  ${status === s.key ? `${s.color} border-transparent` : "bg-white border-gray-300 text-gray-500 hover:border-gray-400"}`}
               >
-                <Send size={15} />{saving ? "…" : "Send"}
+                {s.icon}{s.label}
               </button>
+            ))}
+            {ticket.status !== "resolved" && (
+              <button
+                onClick={handleClose}
+                disabled={saving}
+                className="ml-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white hover:bg-green-600 transition-all disabled:opacity-50"
+              >
+                <CheckCircle size={12} /> Close Ticket
+              </button>
+            )}
+          </div>
+
+          {/* Reply input */}
+          {ticket.status !== "resolved" && (
+            <div className="px-5 pb-4 pt-2 border-t border-gray-100">
+              <div className="flex gap-2 items-end">
+                <textarea
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  rows={2}
+                  placeholder="Type a reply… (Enter to send, Shift+Enter for new line)"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={saving || !reply.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm transition-all disabled:opacity-50"
+                >
+                  <Send size={15} />{saving ? "…" : "Send"}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        {ticket.status === "resolved" && (
-          <div className="px-5 pb-4 pt-2 text-center text-sm text-gray-400">
-            This ticket is resolved. No further replies can be sent.
-          </div>
-        )}
+          )}
+          {ticket.status === "resolved" && (
+            <div className="px-5 pb-4 pt-2 text-center text-sm text-gray-400">
+              This ticket is resolved. No further replies can be sent.
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Full user detail view — renders on top of the thread modal (z-50 > z-40) */}
+      {viewingUser && submitter && (
+        <UserDetailView
+          user={submitter}
+          onBack={() => setViewingUser(false)}
+          onBlacklisted={(uid, reason) => onSubmitterBlacklisted?.(uid, reason)}
+          onDeleted={(uid) => {
+            onSubmitterDeleted?.(uid);
+            setViewingUser(false);
+            onClose();
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -282,7 +307,10 @@ const CustomerService = () => {
       await Promise.all(uids.map(async uid => {
         try {
           const u = await getDoc(doc(db, "users", uid));
-          if (u.exists()) profiles[uid] = u.data();
+          // Include `id` here — UserDetailView's blacklist/delete actions
+          // both call doc(db, 'users', user.id), and without it those
+          // writes would silently target an undefined doc.
+          if (u.exists()) profiles[uid] = { id: uid, ...u.data() };
         } catch (_) {}
       }));
       setSubmitters(profiles);
@@ -295,6 +323,25 @@ const CustomerService = () => {
   const handleStatusChange = (id, updates) => {
     setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     setSelected(prev => prev?.id === id ? { ...prev, ...updates } : prev);
+  };
+
+  // Keeps the cached submitter profile in sync after actions taken from
+  // inside the embedded UserDetailView, so reopening it in the same
+  // session doesn't show stale blacklist status.
+  const handleSubmitterBlacklisted = (uid, reason) => {
+    setSubmitters(prev => prev[uid]
+      ? { ...prev, [uid]: { ...prev[uid], blacklisted: true, blacklistReason: reason } }
+      : prev
+    );
+  };
+
+  const handleSubmitterDeleted = (uid) => {
+    setSubmitters(prev => {
+      if (!prev[uid]) return prev;
+      const next = { ...prev };
+      delete next[uid];
+      return next;
+    });
   };
 
   const filtered = tickets.filter(t => {
@@ -320,6 +367,8 @@ const CustomerService = () => {
           onClose={() => setSelected(null)}
           onStatusChange={handleStatusChange}
           adminUser={currentUser}
+          onSubmitterBlacklisted={handleSubmitterBlacklisted}
+          onSubmitterDeleted={handleSubmitterDeleted}
         />
       )}
 

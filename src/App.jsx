@@ -23,6 +23,7 @@ const ListingsPage = lazy(() => import('./admin/ListingsManager'));
 const MarketplaceManager = lazy(() => import('./admin/MarketplaceManager'));
 const CustomerService = lazy(() => import('./admin/CustomerService'));
 const AdminTransactions = lazy(() => import('./admin/AdminTransactions'));
+const ResetPassword = lazy(() => import('./Auth/ResetPassword'));
 
 
 const App = () => {
@@ -59,6 +60,13 @@ const App = () => {
               <AdminLogin />
             </Suspense>
           } />
+          
+
+		<Route path="/portal-mgmt-xyz99/reset-password" element={
+		  <Suspense fallback={<div className="p-8">Loading…</div>}>
+			<ResetPassword />
+		  </Suspense>
+		} />
           
           <Route path="/portal-mgmt-xyz99" element={
             <ProtectedRoute>

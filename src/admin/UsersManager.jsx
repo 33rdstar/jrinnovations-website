@@ -51,7 +51,7 @@ const BLACKLIST_REASONS = [
 ];
 
 // ── Full-window User Detail View ───────────────────────────────────
-const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
+export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
   const [tab, setTab]       = useState('profile');
   const [blReason, setBlReason] = useState(BLACKLIST_REASONS[0]);
   const [blNotes, setBlNotes]   = useState('');
