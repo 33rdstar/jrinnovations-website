@@ -23,6 +23,7 @@ const ALLOWED_CREATOR_ROLES = ["admin", "manager", "registration_officer"];
 exports.createBackOfficer = onCall(async (request) => {
   const {
     name,
+    username,
     email,
     phoneNumber,
     nrcNumber,
@@ -53,10 +54,24 @@ exports.createBackOfficer = onCall(async (request) => {
   }
 
   // ── Validation ────────────────────────────────────────────────
-  if (!name || !email || !phoneNumber || !nrcNumber || !otp || !role) {
+  if (!name || !username || !email || !phoneNumber || !nrcNumber ||
+      !otp || !role) {
     throw new HttpsError(
         "invalid-argument",
         "Missing required fields.",
+    );
+  }
+
+  // ── Username must be unique ───────────────────────────────────
+  // Officers sign in with their username, so two accounts can't share one.
+  const dup = await db.collection("users")
+      .where("username", "==", username)
+      .limit(1)
+      .get();
+  if (!dup.empty) {
+    throw new HttpsError(
+        "already-exists",
+        "That username is already taken.",
     );
   }
 
@@ -75,6 +90,7 @@ exports.createBackOfficer = onCall(async (request) => {
   // ── Write Firestore doc ───────────────────────────────────────
   const officerData = {
     name,
+    username,
     email,
     phoneNumber,
     nrcNumber,

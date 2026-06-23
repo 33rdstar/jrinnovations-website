@@ -41,6 +41,7 @@ const roleLabel = (value) => OFFICER_ROLES.find((r) => r.value === value)?.label
 const CreateOfficerModal = ({ onClose, onCreated }) => {
   const [form, setForm] = useState({
     name: '',
+    username: '',
     email: '',
     phoneNumber: '',
     nrcNumber: '',
@@ -66,8 +67,8 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
   };
 
   const handleCreate = async () => {
-    const { name, email, phoneNumber, nrcNumber, role } = form;
-    if (!name || !email || !phoneNumber || !nrcNumber || !role) {
+    const { name, username, email, phoneNumber, nrcNumber, role } = form;
+    if (!name || !username || !email || !phoneNumber || !nrcNumber || !role) {
       setError('All fields are required.');
       return;
     }
@@ -91,11 +92,13 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
 
       const result = await createOfficer({
         name,
+        username,
         email,
         phoneNumber,
         nrcNumber,
         role,
         gender: form.gender,
+        zieaNumber: form.zieaNumber,
         otp,          // Cloud Function sets this as the initial password
       });
 
@@ -155,6 +158,12 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
               <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
               <input {...field('name')} placeholder="e.g. Mwansa Banda"
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+              <input {...field('username')} placeholder="e.g. mwansa.banda" autoCapitalize="none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm" />
+              <p className="text-xs text-gray-400 mt-1">The officer signs in with this username.</p>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
@@ -287,6 +296,7 @@ const BackOfficersManager = () => {
             <thead>
               <tr className="bg-gray-50 text-gray-600 border-b border-gray-200 text-sm">
                 <th className="p-4 font-semibold">Name</th>
+                <th className="p-4 font-semibold">Username</th>
                 <th className="p-4 font-semibold">Email</th>
                 <th className="p-4 font-semibold">NRC</th>
                 <th className="p-4 font-semibold">Mobile</th>
@@ -299,7 +309,8 @@ const BackOfficersManager = () => {
             <tbody>
               {officers.map((o) => (
                 <tr key={o.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm">
-                  <td className="p-4 font-medium text-gray-800">{o.name || o.username || 'N/A'}</td>
+                  <td className="p-4 font-medium text-gray-800">{o.name || 'N/A'}</td>
+                  <td className="p-4 text-gray-600">{o.username || 'N/A'}</td>
                   <td className="p-4 text-gray-600">{o.email}</td>
                   <td className="p-4 text-gray-600">{o.nrcNumber || 'N/A'}</td>
                   <td className="p-4 text-gray-600">{o.phoneNumber || 'N/A'}</td>
@@ -329,7 +340,7 @@ const BackOfficersManager = () => {
               ))}
               {officers.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-gray-400">
+                  <td colSpan="9" className="p-8 text-center text-gray-400">
                     No back officers yet. Create one to get started.
                   </td>
                 </tr>

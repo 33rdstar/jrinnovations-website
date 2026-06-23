@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   Trash2, Search, X, User, Mail, Phone, CreditCard,
-  Calendar, Shield, ShieldOff, ArrowLeft, AlertCircle, CheckCircle
+  Calendar, Shield, ShieldOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { db, auth } from '../Config/firebaseConfig';
 import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // ── Style tokens (mirrors Sidebar palette) ────────────────────────
-const T = {
+export const T = {
   bg:           '#0D1B2A',
   bgCard:       '#112236',
   bgRow:        '#0f1f30',
@@ -28,19 +28,33 @@ const T = {
   font:         "'Inter','Segoe UI',system-ui,sans-serif",
 };
 
-const roleMeta = (role) => {
+export const roleMeta = (role) => {
   if (role === 'manager')       return { color: T.purple, bg: T.purpleSub, label: 'Manager' };
   if (role === 'agent')         return { color: T.blue,   bg: T.blueSub,   label: 'Agent' };
+  if (role === 'registration_officer') return { color: T.accent, bg: T.accentSub, label: 'Registration Officer' };
+  if (role === 'customer_care') return { color: T.accent, bg: T.accentSub, label: 'Customer Care' };
+  if (role === 'auditor')       return { color: T.accent, bg: T.accentSub, label: 'Auditor' };
   if (role === 'officer')       return { color: T.accent, bg: T.accentSub, label: 'Officer' };
   if (role === 'landlord')      return { color: '#FB923C', bg: 'rgba(251,146,60,0.12)', label: 'Landlord' };
-  if (role === 'property owner')return { color: '#FB923C', bg: 'rgba(251,146,60,0.12)', label: 'Property Owner' };
+  if (role === 'property_owner' || role === 'property owner')
+                                return { color: '#FB923C', bg: 'rgba(251,146,60,0.12)', label: 'Property Owner' };
   return { color: T.green, bg: T.greenSub, label: role ? role.charAt(0).toUpperCase()+role.slice(1) : 'Client' };
 };
 
-const fmt = (iso) => {
-  if (!iso) return 'N/A';
-  try { return new Date(iso).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }); }
-  catch { return iso; }
+// Accepts Firestore Timestamps, { seconds } objects, JS Dates and ISO strings —
+// mobile docs store Timestamps while officer docs store ISO strings.
+export const fmt = (value) => {
+  if (!value) return 'N/A';
+  try {
+    let date;
+    if (typeof value.toDate === 'function') date = value.toDate();
+    else if (typeof value === 'object' && 'seconds' in value) date = new Date(value.seconds * 1000);
+    else date = new Date(value);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return 'N/A';
+  }
 };
 
 const BLACKLIST_REASONS = [
@@ -50,9 +64,14 @@ const BLACKLIST_REASONS = [
   'Identity Misrepresentation',
 ];
 
+// Roles whose accounts go through admin identity verification.
+const VERIFIABLE_ROLES = ['agent', 'property_owner', 'property owner', 'landlord'];
+
 // ── Full-window User Detail View ───────────────────────────────────
-export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
-  const [tab, setTab]       = useState('profile');
+export const UserDetailView = ({
+  user, onBack, onBlacklisted, onDeleted, onVerified, initialTab = 'profile',
+}) => {
+  const [tab, setTab]       = useState(initialTab);
   const [blReason, setBlReason] = useState(BLACKLIST_REASONS[0]);
   const [blNotes, setBlNotes]   = useState('');
   const [blLoading, setBlLoading] = useState(false);
@@ -61,6 +80,50 @@ export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
   const [pwError, setPwError]   = useState('');
   const [pwDone, setPwDone]     = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  // ── Verification state ──
+  const isVerifiable = VERIFIABLE_ROLES.includes(user.role);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [rejectMode, setRejectMode]       = useState(false);
+  const [rejectReason, setRejectReason]   = useState('');
+  // An owner/agent with no explicit status is a legacy account — surface it as
+  // 'pending' here so staff can formally review it. (The mobile app separately
+  // grandfathers these accounts in so they aren't locked out in the meantime.)
+  const [vStatus, setVStatus] = useState(
+    user.verificationStatus || (isVerifiable ? 'pending' : null)
+  );
+  const vMeta = vStatus === 'approved' ? { c: T.green, b: T.greenSub }
+    : vStatus === 'rejected' ? { c: T.red, b: T.redSub }
+    : { c: T.accent, b: T.accentSub };
+
+  const handleVerifyDecision = async (decision) => {
+    setVerifyLoading(true);
+    try {
+      const updates = decision === 'approve'
+        ? {
+            verificationStatus: 'approved',
+            isActive: true,
+            rejectionReason: null,
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: auth.currentUser?.uid || null,
+          }
+        : {
+            verificationStatus: 'rejected',
+            isActive: false,
+            rejectionReason: rejectReason.trim() || 'Not specified',
+            verifiedAt: new Date().toISOString(),
+            verifiedBy: auth.currentUser?.uid || null,
+          };
+      await updateDoc(doc(db, 'users', user.id), updates);
+      setVStatus(updates.verificationStatus);
+      setRejectMode(false);
+      onVerified?.(user.id, updates);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
 
   const meta = roleMeta(user.role);
 
@@ -105,6 +168,7 @@ export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
 
   const tabs = [
     { key: 'profile',   label: 'Profile' },
+    ...(isVerifiable ? [{ key: 'verification', label: vStatus === 'pending' ? 'Verification •' : 'Verification' }] : []),
     { key: 'blacklist', label: user.blacklisted ? 'Blacklisted ⛔' : 'Blacklist' },
     { key: 'password',  label: 'Reset Password' },
   ];
@@ -225,14 +289,21 @@ export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
               }}>
                 {meta.label}
               </span>
-              <span style={{
-                background: user.blacklisted ? T.redSub : T.greenSub,
-                color: user.blacklisted ? T.red : T.green,
-                fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
-                padding: '4px 14px', borderRadius: 20,
-              }}>
-                {user.blacklisted ? '⛔ Blacklisted' : '✓ Active'}
-              </span>
+              {(() => {
+                let label = '✓ Active', col = T.green, bgc = T.greenSub;
+                if (user.blacklisted) { label = '⛔ Blacklisted'; col = T.red; bgc = T.redSub; }
+                else if (isVerifiable && vStatus === 'pending') { label = '⏳ Pending Verification'; col = T.accent; bgc = T.accentSub; }
+                else if (isVerifiable && vStatus === 'rejected') { label = '✕ Verification Rejected'; col = T.red; bgc = T.redSub; }
+                return (
+                  <span style={{
+                    background: bgc, color: col,
+                    fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                    padding: '4px 14px', borderRadius: 20,
+                  }}>
+                    {label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -297,6 +368,131 @@ export const UserDetailView = ({ user, onBack, onBlacklisted, onDeleted }) => {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── VERIFICATION TAB */}
+        {tab === 'verification' && (
+          <div style={{ maxWidth: 640 }}>
+            <div style={{
+              background: T.bgCard, borderRadius: 16, border: `1px solid ${T.border}`,
+              padding: 24, marginBottom: 20,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <ShieldCheck size={20} style={{ color: T.accent }} />
+                <div style={{ color: T.textPrimary, fontWeight: 700, fontSize: 16 }}>Identity Verification</div>
+                <span style={{
+                  marginLeft: 'auto', background: vMeta.b, color: vMeta.c,
+                  fontSize: 11, fontWeight: 700, letterSpacing: 0.6,
+                  padding: '4px 14px', borderRadius: 20, textTransform: 'uppercase',
+                }}>
+                  {vStatus || 'N/A'}
+                </span>
+              </div>
+
+              {/* Document thumbnails */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                {[
+                  { label: 'NRC — Front', url: user.nrcFrontURL },
+                  { label: 'NRC — Back',  url: user.nrcBackURL },
+                  { label: 'Selfie + NRC', url: user.nrcSelfieURL },
+                ].map((d) => (
+                  <div key={d.label}>
+                    <div style={{
+                      color: T.textSecondary, fontSize: 10, fontWeight: 600,
+                      textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
+                    }}>{d.label}</div>
+                    {d.url ? (
+                      <a href={d.url} target="_blank" rel="noreferrer" title="Open full size">
+                        <img src={d.url} alt={d.label} style={{
+                          width: '100%', height: 120, objectFit: 'cover',
+                          borderRadius: 10, border: `1px solid ${T.border}`, display: 'block',
+                        }} />
+                      </a>
+                    ) : (
+                      <div style={{
+                        height: 120, borderRadius: 10, border: `1px dashed ${T.border}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: T.textSecondary, fontSize: 12,
+                      }}>
+                        Not provided
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ID numbers */}
+              <div style={{ display: 'flex', gap: 32, marginTop: 20, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ color: T.textSecondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>NRC Number</div>
+                  <div style={{ color: T.textPrimary, fontSize: 14, marginTop: 4 }}>{user.nrcNumber || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ color: T.textSecondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>ZIEA Number</div>
+                  <div style={{ color: T.textPrimary, fontSize: 14, marginTop: 4 }}>{user.zieaNumber || 'N/A'}</div>
+                </div>
+              </div>
+
+              {vStatus === 'rejected' && user.rejectionReason && (
+                <div style={{ marginTop: 18, color: T.red, fontSize: 13 }}>
+                  Rejection reason: {user.rejectionReason}
+                </div>
+              )}
+            </div>
+
+            {/* Decision actions */}
+            {!rejectMode ? (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={() => handleVerifyDecision('approve')} disabled={verifyLoading || vStatus === 'approved'}
+                  style={{
+                    flex: 1, padding: '12px 0', borderRadius: 12,
+                    background: T.green, border: 'none', color: '#06281a', fontWeight: 700,
+                    cursor: vStatus === 'approved' ? 'not-allowed' : 'pointer',
+                    opacity: vStatus === 'approved' ? 0.5 : 1,
+                    fontFamily: T.font, fontSize: 13,
+                  }}>
+                  {vStatus === 'approved' ? 'Already Approved' : (verifyLoading ? 'Saving…' : '✓ Approve Account')}
+                </button>
+                <button onClick={() => setRejectMode(true)} disabled={verifyLoading}
+                  style={{
+                    flex: 1, padding: '12px 0', borderRadius: 12,
+                    background: T.redSub, border: `1px solid ${T.red}`, color: T.red, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: T.font, fontSize: 13,
+                  }}>
+                  ✕ Reject
+                </button>
+              </div>
+            ) : (
+              <div style={{ background: T.bgCard, borderRadius: 16, border: `1px solid ${T.border}`, padding: 20 }}>
+                <label style={{ display: 'block', color: T.textSecondary, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 }}>
+                  Reason for rejection
+                </label>
+                <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3}
+                  placeholder="Explain what's wrong with the documents…"
+                  style={{
+                    width: '100%', background: T.bg, border: `1px solid ${T.border}`,
+                    borderRadius: 10, color: T.textPrimary, padding: '11px 14px',
+                    fontSize: 13, fontFamily: T.font, outline: 'none', resize: 'none',
+                    boxSizing: 'border-box', marginBottom: 16,
+                  }} />
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button onClick={() => setRejectMode(false)} style={{
+                    flex: 1, padding: '12px 0', borderRadius: 12, background: 'none',
+                    border: `1px solid ${T.border}`, color: T.textSecondary, cursor: 'pointer',
+                    fontFamily: T.font, fontSize: 13,
+                  }}>
+                    Cancel
+                  </button>
+                  <button onClick={() => handleVerifyDecision('reject')} disabled={verifyLoading} style={{
+                    flex: 1, padding: '12px 0', borderRadius: 12, background: T.red, border: 'none',
+                    color: '#fff', fontWeight: 700, cursor: 'pointer', fontFamily: T.font, fontSize: 13,
+                  }}>
+                    {verifyLoading ? 'Saving…' : 'Confirm Rejection'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -474,6 +670,11 @@ const UsersManager = () => {
     setUsers(u => u.filter(x => x.id !== userId));
   };
 
+  const handleVerified = (userId, updates) => {
+    setUsers(u => u.map(x => x.id === userId ? { ...x, ...updates } : x));
+    setSelectedUser(prev => prev?.id === userId ? { ...prev, ...updates } : prev);
+  };
+
   // ── If a user is selected, render the full-window detail view
   if (selectedUser) {
     return (
@@ -482,6 +683,7 @@ const UsersManager = () => {
         onBack={() => setSelectedUser(null)}
         onBlacklisted={handleBlacklisted}
         onDeleted={handleDeleted}
+        onVerified={handleVerified}
       />
     );
   }

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ShieldCheck } from 'lucide-react';
+import { Users, ShieldCheck, BadgeCheck } from 'lucide-react';
 import UsersManager from './UsersManager';
 import BackOfficersManager from './BackOfficeManager';
+import VerificationsManager from './VerificationsManager';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../Config/firebaseConfig';
 import { useAuth } from '../Auth/AuthContext';
 
 const TABS = [
-  { key: 'customers', label: 'All Users', icon: <Users size={16} />, access: ['manager','admin', 'registration_officer', 'customer_care'] },
-  { key: 'officers',  label: 'Back Officers', icon: <ShieldCheck size={16} />, access: ['manager', 'admin', 'registration_officer'] },
+  { key: 'customers',     label: 'All Users',     icon: <Users size={16} />,      access: ['manager','admin', 'registration_officer', 'customer_care'] },
+  { key: 'verifications', label: 'Verifications', icon: <BadgeCheck size={16} />, access: ['manager','admin', 'registration_officer'] },
+  { key: 'officers',      label: 'Back Officers', icon: <ShieldCheck size={16} />, access: ['manager', 'admin', 'registration_officer'] },
 ];
 
 // Maps each tab key to the component that renders it. Adding a tab here
@@ -16,6 +18,7 @@ const TABS = [
 // no separate per-tab conditional left to remember (and forget) later.
 const TAB_CONTENT = {
   customers: UsersManager,
+  verifications: VerificationsManager,
   officers: BackOfficersManager,
 };
 

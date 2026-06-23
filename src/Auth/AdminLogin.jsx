@@ -2,20 +2,50 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../Config/firebaseConfig';
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Resolve the typed username to the email Firebase Auth needs. Staff sign in
+  // with their username; the role is then whatever their account record says it
+  // is (resolved by AuthContext + enforced by the route guards). An email can
+  // also be entered directly so officer accounts created before usernames
+  // existed still work.
+  const resolveEmail = async (identifier) => {
+    if (identifier.includes('@')) return identifier;
+    const snap = await getDocs(
+      query(collection(db, 'users'), where('username', '==', identifier))
+    );
+    if (snap.empty) return null;
+    return snap.docs[0].data().email || null;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
+      const identifier = username.trim();
+      if (!identifier) {
+        setError('Please enter your username.');
+        setLoading(false);
+        return;
+      }
+
+      const email = await resolveEmail(identifier);
+      if (!email) {
+        setError('No account found with that username.');
+        setLoading(false);
+        return;
+      }
+
       const credential = await login(email, password);
       const uid = credential.user.uid;
 
@@ -33,7 +63,9 @@ const AdminLogin = () => {
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to log in. Check credentials.');
+      setError('Failed to log in. Check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,11 +81,13 @@ const AdminLogin = () => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">Admin Email</label>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Username</label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all"
               required
             />
@@ -62,6 +96,7 @@ const AdminLogin = () => {
             <label className="block text-gray-700 text-sm font-bold mb-2">Password</label>
             <input
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-600 transition-all"
@@ -70,9 +105,10 @@ const AdminLogin = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-4 rounded-xl hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-4 rounded-xl hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-60 disabled:transform-none"
           >
-            Authenticate
+            {loading ? 'Authenticating…' : 'Authenticate'}
           </button>
         </form>
         {error && <p className="text-sm text-red-500 font-medium text-center mt-4">{error}</p>}
