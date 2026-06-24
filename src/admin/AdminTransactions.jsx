@@ -4,11 +4,14 @@ import {
   getFirestore, collection, onSnapshot, orderBy, query, doc, getDoc,
 } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 // ── constants
-const PAYOUT_RATIO   = 0.4;
-const COMPANY_RATIO  = 0.6;
+// Lister/agent gets 60% of each contact-reveal fee, company keeps 40%
+// (matches PAYOUT_RATIO in the mobile Cloud Functions).
+const PAYOUT_RATIO   = 0.6;
+const COMPANY_RATIO  = 0.4;
 const STATUS_COLORS  = {
   completed:  { bg: '#d1fae5', color: '#065f46' },
   pending:    { bg: '#fef9c3', color: '#854d0e' },
@@ -41,6 +44,7 @@ export default function AdminTransactions() {
   const [loading, setLoading]           = useState(true);
   const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const navigate = useNavigate();
 
   // ── live listener
   useEffect(() => {
@@ -107,8 +111,8 @@ export default function AdminTransactions() {
       {/* ── Summary cards ── */}
       <div style={styles.cards}>
         <SummaryCard label="Total Revenue"    value={fmt(summary.total)}      sub={`${summary.count} completed`} accent="#6366f1" />
-        <SummaryCard label="Company (60%)"    value={fmt(summary.company)}    sub="Net earnings"                 accent="#10b981" />
-        <SummaryCard label="Agent Payouts (40%)" value={fmt(summary.agentCuts)} sub="Across all agents"          accent="#f59e0b" />
+        <SummaryCard label="Company (40%)"    value={fmt(summary.company)}    sub="Net earnings"                 accent="#10b981" />
+        <SummaryCard label="Agent Payouts (60%)" value={fmt(summary.agentCuts)} sub="Across all agents"          accent="#f59e0b" />
         <SummaryCard label="All Transactions" value={transactions.length}     sub="Including pending/failed"     accent="#64748b" />
       </div>
 
@@ -144,7 +148,7 @@ export default function AdminTransactions() {
             <thead>
               <tr>
                 {['Date', 'Reference', 'Agent', 'Property ID', 'Customer Phone',
-                  'Amount', 'Agent 40%', 'Company 60%', 'Status'].map(h => (
+                  'Amount', 'Agent 60%', 'Company 40%', 'Status'].map(h => (
                   <th key={h} style={styles.th}>{h}</th>
                 ))}
               </tr>
@@ -156,7 +160,14 @@ export default function AdminTransactions() {
                 const companyCut= amount * COMPANY_RATIO;
                 const sc        = STATUS_COLORS[t.status] || STATUS_COLORS.pending;
                 return (
-                  <tr key={t.id} style={styles.tr}>
+                  <tr
+                    key={t.id}
+                    style={{ ...styles.tr, cursor: 'pointer' }}
+                    onClick={() => navigate(`/portal-mgmt-xyz99/transaction/${t.id}`)}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#172033'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    title="Open full details"
+                  >
                     <td style={styles.td}>{fmtDate(t.createdAt)}</td>
                     <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12 }}>{t.reference || t.id}</td>
                     <td style={styles.td}>{agentNames[t.ownerId] || t.ownerId || '—'}</td>

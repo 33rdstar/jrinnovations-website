@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Users, Home, ShoppingBag, MessageSquare, LogOut, Landmark } from 'lucide-react';
+import { Users, Home, ShoppingBag, MessageSquare, LogOut, Landmark, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../Auth/AuthContext';
 
 const AdminSidebar = () => {
@@ -18,11 +18,12 @@ const AdminSidebar = () => {
   };
 
   const navItems = [
-    { path: 'users',       icon: <Users size={18} />,       label: 'Manage users',    section: 'Management', allowedUsers: ['manager','admin', 'registration_officer', 'customer_care'] },
-    { path: 'listings',    icon: <Home size={18} />,        label: 'Real estate',     section: null, allowedUsers: ['manager', 'admin', 'customer_care'] },
-    { path: 'marketplace', icon: <ShoppingBag size={18} />, label: 'Marketplace',     section: null, allowedUsers: ['manager','admin', 'customer_care'] },
-    { path: 'audits',      icon: <Landmark size={18} />,    label: 'Treasury',        section: null, allowedUsers: ['manager','admin', 'auditor'] },
-    { path: 'queries',     icon: <MessageSquare size={18} />, label: 'Customer service', section: 'Support', allowedUsers: ['manager','admin', 'customer_care'] },
+    { path: 'users',       icon: <Users size={18} />,         label: 'Manage users',     section: 'Management', allowedUsers: ['manager','admin', 'registration_officer', 'customer_care'] },
+    { path: 'listings',    icon: <Home size={18} />,          label: 'Real estate',      section: null,         allowedUsers: ['manager', 'admin', 'customer_care'] },
+    { path: 'marketplace', icon: <ShoppingBag size={18} />,   label: 'Marketplace',      section: null,         allowedUsers: ['manager','admin', 'customer_care'] },
+    { path: 'queries',     icon: <MessageSquare size={18} />, label: 'Customer service', section: 'Support',    allowedUsers: ['manager','admin', 'customer_care'] },
+    { path: 'audits',      icon: <Landmark size={18} />,      label: 'Treasury',         section: 'Accounts',   allowedUsers: ['manager','admin', 'auditor'] },
+    { path: 'analytics',   icon: <BarChart3 size={18} />,     label: 'Analytics',        section: null,         allowedUsers: ['manager','admin', 'auditor'] },
   ];
 
   // Only show nav items this role is allowed to see

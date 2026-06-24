@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Trash2, Search, X, User, Mail, Phone, CreditCard,
   Calendar, Shield, ShieldOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle
@@ -57,6 +57,20 @@ export const fmt = (value) => {
   }
 };
 
+// Normalise any stored date form to epoch millis for sorting; unknown/missing → 0
+// (so undated legacy docs sort to the bottom of a newest-first list).
+export const toMillis = (value) => {
+  if (!value) return 0;
+  try {
+    if (typeof value.toDate === 'function') return value.toDate().getTime();
+    if (typeof value === 'object' && 'seconds' in value) return value.seconds * 1000;
+    const t = new Date(value).getTime();
+    return isNaN(t) ? 0 : t;
+  } catch {
+    return 0;
+  }
+};
+
 const BLACKLIST_REASONS = [
   'Suspected Fraud',
   'Breaking User Guidelines',
@@ -80,6 +94,32 @@ export const UserDetailView = ({
   const [pwError, setPwError]   = useState('');
   const [pwDone, setPwDone]     = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  // ── ID-document lightbox state ──
+  const [lightboxIndex, setLightboxIndex] = useState(null);
+  const stripRef = useRef(null);
+  const idDocs = [
+    { label: 'NRC — Front', url: user.nrcFrontURL },
+    { label: 'NRC — Back',  url: user.nrcBackURL },
+    { label: 'Selfie + NRC', url: user.nrcSelfieURL },
+  ];
+  const availableDocs = idDocs.filter((d) => d.url);
+
+  // Close on Escape while the lightbox is open.
+  useEffect(() => {
+    if (lightboxIndex === null) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setLightboxIndex(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxIndex]);
+
+  // Scroll the clicked document into view when the lightbox opens.
+  useEffect(() => {
+    if (lightboxIndex !== null && stripRef.current) {
+      const child = stripRef.current.children[lightboxIndex];
+      if (child && child.scrollIntoView) child.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }
+  }, [lightboxIndex]);
 
   // ── Verification state ──
   const isVerifiable = VERIFIABLE_ROLES.includes(user.role);
@@ -106,6 +146,9 @@ export const UserDetailView = ({
             rejectionReason: null,
             verifiedAt: new Date().toISOString(),
             verifiedBy: auth.currentUser?.uid || null,
+            // One-time flag: the mobile app shows a "you're verified" message on
+            // the user's next login, then clears this.
+            pendingApprovalNotice: true,
           }
         : {
             verificationStatus: 'rejected',
@@ -390,25 +433,26 @@ export const UserDetailView = ({
                 </span>
               </div>
 
-              {/* Document thumbnails */}
+              {/* Document thumbnails — click opens the in-page lightbox */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                {[
-                  { label: 'NRC — Front', url: user.nrcFrontURL },
-                  { label: 'NRC — Back',  url: user.nrcBackURL },
-                  { label: 'Selfie + NRC', url: user.nrcSelfieURL },
-                ].map((d) => (
+                {idDocs.map((d) => (
                   <div key={d.label}>
                     <div style={{
                       color: T.textSecondary, fontSize: 10, fontWeight: 600,
                       textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
                     }}>{d.label}</div>
                     {d.url ? (
-                      <a href={d.url} target="_blank" rel="noreferrer" title="Open full size">
+                      <button
+                        type="button"
+                        onClick={() => setLightboxIndex(availableDocs.findIndex((x) => x.label === d.label))}
+                        title="Click to view"
+                        style={{ display: 'block', width: '100%', padding: 0, border: 'none', background: 'none', cursor: 'pointer' }}
+                      >
                         <img src={d.url} alt={d.label} style={{
                           width: '100%', height: 120, objectFit: 'cover',
                           borderRadius: 10, border: `1px solid ${T.border}`, display: 'block',
                         }} />
-                      </a>
+                      </button>
                     ) : (
                       <div style={{
                         height: 120, borderRadius: 10, border: `1px dashed ${T.border}`,
@@ -637,6 +681,54 @@ export const UserDetailView = ({
           </div>
         )}
       </div>
+
+      {/* ── Identity-document lightbox (in-page, blurred backdrop, scrollable) */}
+      {lightboxIndex !== null && availableDocs[lightboxIndex] && (
+        <div
+          onClick={() => setLightboxIndex(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(8,12,20,0.72)',
+            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column',
+          }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px 24px', flexShrink: 0,
+          }}>
+            <span style={{ color: T.textPrimary, fontWeight: 700, fontSize: 14 }}>
+              Identity documents — {user.username || user.email}
+            </span>
+            <button onClick={() => setLightboxIndex(null)} aria-label="Close" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 40, height: 40, borderRadius: 20, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.1)', border: `1px solid ${T.border}`, color: T.textPrimary,
+            }}>
+              <X size={20} />
+            </button>
+          </div>
+
+          <div ref={stripRef} onClick={(e) => e.stopPropagation()} style={{
+            flex: 1, display: 'flex', gap: 20, overflowX: 'auto', overflowY: 'hidden',
+            padding: '0 24px 24px', alignItems: 'center', scrollSnapType: 'x mandatory',
+          }}>
+            {availableDocs.map((d) => (
+              <div key={d.label} style={{ scrollSnapAlign: 'center', flex: '0 0 auto', textAlign: 'center' }}>
+                <img src={d.url} alt={d.label} style={{
+                  maxWidth: '88vw', maxHeight: '72vh', objectFit: 'contain',
+                  borderRadius: 12, border: `1px solid ${T.border}`, background: '#000', display: 'block',
+                }} />
+                <div style={{ color: T.textSecondary, fontSize: 13, marginTop: 10 }}>{d.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ textAlign: 'center', color: T.textSecondary, fontSize: 12, paddingBottom: 16 }}>
+            Scroll sideways to compare · click outside or press Esc to close
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -688,11 +780,13 @@ const UsersManager = () => {
     );
   }
 
-  const filteredUsers = users.filter(u =>
-    u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users
+    .filter(u =>
+      u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
 
   const totalPages   = Math.ceil(filteredUsers.length / perPage);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -744,7 +838,7 @@ const UsersManager = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${T.border}` }}>
-                  {['Role', 'Username', 'Email', 'NRC Number', 'Mobile Number', 'Status'].map(h => (
+                  {['Role', 'Username', 'Email', 'NRC Number', 'Mobile Number', 'Joined', 'Status'].map(h => (
                     <th key={h} style={{
                       padding: '10px 16px', color: T.textSecondary, fontWeight: 600,
                       fontSize: 11, letterSpacing: 0.7, textTransform: 'uppercase', textAlign: 'left',
@@ -788,6 +882,7 @@ const UsersManager = () => {
                       <td style={{ padding: '14px 16px', color: T.textSecondary }}>{user.email}</td>
                       <td style={{ padding: '14px 16px', color: T.textSecondary }}>{user.nrcNumber || 'N/A'}</td>
                       <td style={{ padding: '14px 16px', color: T.textSecondary }}>{user.phoneNumber || 'N/A'}</td>
+                      <td style={{ padding: '14px 16px', color: T.textSecondary, whiteSpace: 'nowrap' }}>{fmt(user.createdAt)}</td>
                       <td style={{ padding: '14px 16px' }}>
                         {user.blacklisted ? (
                           <span title={user.blacklistReason} style={{
@@ -808,7 +903,7 @@ const UsersManager = () => {
                 })}
                 {paginatedUsers.length === 0 && (
                   <tr>
-                    <td colSpan="6" style={{ padding: 40, textAlign: 'center', color: T.textSecondary }}>
+                    <td colSpan="7" style={{ padding: 40, textAlign: 'center', color: T.textSecondary }}>
                       No users found.
                     </td>
                   </tr>

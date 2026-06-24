@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Search } from 'lucide-react';
 import { db } from '../Config/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { UserDetailView, T, roleMeta, fmt } from './UsersManager';
+import { UserDetailView, T, roleMeta, fmt, toMillis } from './UsersManager';
 
 // Roles that go through identity verification. Kept in sync with VERIFIABLE_ROLES
 // in UsersManager.jsx (Firestore `in` accepts up to 10 values).
@@ -77,7 +77,8 @@ const VerificationsManager = () => {
         || u.username?.toLowerCase().includes(t)
         || u.email?.toLowerCase().includes(t)
         || u.nrcNumber?.toLowerCase().includes(t);
-    });
+    })
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
 
   return (
     <div style={{

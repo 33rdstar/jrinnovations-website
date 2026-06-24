@@ -2,13 +2,9 @@ import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './Auth/AuthContext';
 
-// Public Pages
+// Public Pages (HomePage, Navigation & PageTransition load eagerly — needed on first paint)
 import HomePage from './HomePage';
-import InnovationPage from './InnovationPage';
-import CreativeArtsPage from './CreativeArtsPage';
-import EntertainmentPage from './EntertainmentPage';
 import PageTransition from './PageTransition';
-import AppStore from './AppStore';
 import Navigation from './Navigation';
 
 // Admin Guards
@@ -23,7 +19,15 @@ const ListingsPage = lazy(() => import('./admin/ListingsManager'));
 const MarketplaceManager = lazy(() => import('./admin/MarketplaceManager'));
 const CustomerService = lazy(() => import('./admin/CustomerService'));
 const AdminTransactions = lazy(() => import('./admin/AdminTransactions'));
+const TransactionDetail = lazy(() => import('./admin/TransactionDetail'));
+const AdminAnalytics = lazy(() => import('./admin/AdminAnalytics'));
 const ResetPassword = lazy(() => import('./Auth/ResetPassword'));
+
+// Lazy public sub-pages — split out of the initial bundle (homepage stays eager)
+const InnovationPage = lazy(() => import('./InnovationPage'));
+const CreativeArtsPage = lazy(() => import('./CreativeArtsPage'));
+const EntertainmentPage = lazy(() => import('./EntertainmentPage'));
+const AppStore = lazy(() => import('./AppStore'));
 
 
 const App = () => {
@@ -43,13 +47,15 @@ const App = () => {
             <>
               <Navigation />
               <PageTransition>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/innovation" element={<InnovationPage />} />
-                  <Route path="/creative-arts" element={<CreativeArtsPage />} />
-                  <Route path="/entertainment" element={<EntertainmentPage />} />
-                  <Route path="/app-store" element={<AppStore />} />
-                </Routes>
+                <Suspense fallback={<div className="p-8">Loading…</div>}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/innovation" element={<InnovationPage />} />
+                    <Route path="/creative-arts" element={<CreativeArtsPage />} />
+                    <Route path="/entertainment" element={<EntertainmentPage />} />
+                    <Route path="/app-store" element={<AppStore />} />
+                  </Routes>
+                </Suspense>
               </PageTransition>
             </>
           } />
@@ -68,6 +74,15 @@ const App = () => {
 		  </Suspense>
 		} />
           
+          {/* Standalone full-window transaction detail (opened in a new tab from the audit table) */}
+          <Route path="/portal-mgmt-xyz99/transaction/:id" element={
+            <ProtectedRoute>
+              <Suspense fallback={<div className="p-8">Loading…</div>}>
+                <TransactionDetail />
+              </Suspense>
+            </ProtectedRoute>
+          } />
+
           <Route path="/portal-mgmt-xyz99" element={
             <ProtectedRoute>
               <Suspense fallback={<div className="p-8">Loading Dashboard...</div>}>
@@ -83,6 +98,7 @@ const App = () => {
 			} />
 			<Route path="marketplace" element={<MarketplaceManager />} />
 			<Route path="audits" element={<AdminTransactions />} />
+			<Route path="analytics" element={<AdminAnalytics />} />
 			<Route path="queries" element={<CustomerService />} />
           </Route>
         </Routes>

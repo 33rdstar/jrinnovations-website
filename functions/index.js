@@ -8,7 +8,9 @@ initializeApp();
 // Roles allowed to create officer accounts. Using .includes() instead of
 // chained !== / || comparisons avoids the bug where a role can only ever
 // match ONE of several values, making an OR-of-negations always true.
-const ALLOWED_CREATOR_ROLES = ["admin", "manager", "registration_officer"];
+// NOTE: registration_officer was intentionally removed — they may view the
+// Back Officers list but must not be able to mint new officer accounts.
+const ALLOWED_CREATOR_ROLES = ["admin", "manager"];
 
 /**
  * createBackOfficer

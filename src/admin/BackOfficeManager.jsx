@@ -6,6 +6,12 @@ import {
   setDoc, query, where
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { useAuth } from '../Auth/AuthContext';
+
+// Only these roles may create back officers. Registration officers can view the
+// list but not mint new accounts. This mirrors ALLOWED_CREATOR_ROLES in the
+// createBackOfficer Cloud Function, which is the actual enforcement boundary.
+const CAN_CREATE_OFFICER_ROLES = ['manager', 'admin'];
 
 // ── Helpers ───────────────────────────────────────────────────────
 
@@ -224,6 +230,8 @@ const CreateOfficerModal = ({ onClose, onCreated }) => {
 
 // ── Main Component ────────────────────────────────────────────────
 const BackOfficersManager = () => {
+  const { userRole } = useAuth();
+  const canCreate = CAN_CREATE_OFFICER_ROLES.includes(userRole);
   const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -265,7 +273,7 @@ const BackOfficersManager = () => {
   return (
     <div className="bg-white rounded-2xl shadow-md p-6 border-t-4 border-purple-500">
 
-      {showCreate && (
+      {showCreate && canCreate && (
         <CreateOfficerModal
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
@@ -278,13 +286,15 @@ const BackOfficersManager = () => {
           <h2 className="text-2xl font-bold text-gray-800">Back Officers</h2>
           <p className="text-sm text-gray-500 mt-0.5">Accounts with restricted access to the Listings QA page</p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all text-sm shadow"
-        >
-          <UserPlus size={16} />
-          New Officer
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-xl transition-all text-sm shadow"
+          >
+            <UserPlus size={16} />
+            New Officer
+          </button>
+        )}
       </div>
 
       {/* Table */}
