@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../Config/firebaseConfig';
+import { useAgentNames } from './shared/useAgentNames';
 
 // Keep in sync with the deployed split (lister 60% / company 40%).
 const PAYOUT_RATIO  = 0.6;
@@ -19,7 +20,7 @@ const STATUS_COLORS = {
 };
 
 // Accept Firestore Timestamps, { seconds }, JS Dates and ISO strings.
-const toDateObj = (ts) => {
+export const toDateObj = (ts) => {
   if (!ts) return null;
   if (typeof ts.toDate === 'function') return ts.toDate();
   if (typeof ts === 'object' && 'seconds' in ts) return new Date(ts.seconds * 1000);
@@ -37,9 +38,9 @@ export default function TransactionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [txn, setTxn] = useState(null);
-  const [agentName, setAgentName] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const { names: agentNames, resolveOne } = useAgentNames();
 
   useEffect(() => {
     let active = true;
@@ -52,22 +53,14 @@ export default function TransactionDetail() {
         setTxn(data);
         setLoading(false);
 
-        if (data.ownerId) {
-          try {
-            const uSnap = await getDoc(doc(db, 'users', data.ownerId));
-            if (active && uSnap.exists()) {
-              const { firstName, lastName, username } = uSnap.data();
-              setAgentName([firstName, lastName].filter(Boolean).join(' ') || username || data.ownerId);
-            }
-          } catch (_) { /* name is best-effort */ }
-        }
+        if (data.ownerId) resolveOne(data.ownerId).catch(() => {});
       } catch (e) {
         console.error('Failed to load transaction:', e);
         if (active) { setNotFound(true); setLoading(false); }
       }
     })();
     return () => { active = false; };
-  }, [id]);
+  }, [id, resolveOne]);
 
   useEffect(() => {
     document.title = txn ? `Transaction ${txn.reference || txn.id}` : 'Transaction';
@@ -80,6 +73,7 @@ export default function TransactionDetail() {
   const created = toDateObj(txn.createdAt);
   const amount = txn.amount || 0;
   const sc = STATUS_COLORS[txn.status] || STATUS_COLORS.pending;
+  const agentName = txn.ownerId ? (agentNames[txn.ownerId] || '') : '';
 
   const rows = [
     ['Date',               created ? created.toLocaleDateString('en-ZM', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'],

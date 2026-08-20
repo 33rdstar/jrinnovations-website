@@ -3,8 +3,6 @@ import { Users, ShieldCheck, BadgeCheck } from 'lucide-react';
 import UsersManager from './UsersManager';
 import BackOfficersManager from './BackOfficeManager';
 import VerificationsManager from './VerificationsManager';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../Config/firebaseConfig';
 import { useAuth } from '../Auth/AuthContext';
 
 const TABS = [
@@ -25,18 +23,6 @@ const TAB_CONTENT = {
 const UserManagerComponent = () => {
   const { userRole } = useAuth();
   const [activeTab, setActiveTab] = useState('customers');
-  const [users, setUsers]         = useState([]);
-  const [loading, setLoading]     = useState(true);
-
-  const fetchUsers = async () => {
-    try {
-      const snap = await getDocs(collection(db, 'users'));
-      setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchUsers(); }, []);
 
   // A tab is visible if it has no `access` list (public to all roles)
   // or if the current role is explicitly in that list.

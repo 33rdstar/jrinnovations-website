@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Trash2, Search, X, User, Mail, Phone, CreditCard,
   Calendar, Shield, ShieldOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { db, auth } from '../Config/firebaseConfig';
 import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { useDebounce } from './shared/useDebounce';
+import { Pagination } from './shared/Pagination';
 
 // ── Style tokens (mirrors Sidebar palette) ────────────────────────
 export const T = {
@@ -737,21 +739,28 @@ export const UserDetailView = ({
 const UsersManager = () => {
   const [users, setUsers]           = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter]     = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'blacklisted'
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage]   = useState(1);
   const [perPage, setPerPage]           = useState(20);
+
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
   const fetchUsers = async () => {
     try {
       const snap = await getDocs(collection(db, 'users'));
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+      setError('Failed to load users.');
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchUsers(); }, []);
-  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, roleFilter, statusFilter]);
 
   const handleBlacklisted = (userId, reason) => {
     setUsers(u => u.map(x => x.id === userId ? { ...x, blacklisted: true, blacklistReason: reason } : x));
@@ -767,6 +776,28 @@ const UsersManager = () => {
     setSelectedUser(prev => prev?.id === userId ? { ...prev, ...updates } : prev);
   };
 
+  const roleOptions = useMemo(
+    () => [...new Set(users.map(u => u.role).filter(Boolean))].sort(),
+    [users]
+  );
+
+  const filteredUsers = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase();
+    return users
+      .filter(u => {
+        const matchesSearch = !term
+          || u.username?.toLowerCase().includes(term)
+          || u.email?.toLowerCase().includes(term)
+          || u.phoneNumber?.toLowerCase().includes(term);
+        const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+        const matchesStatus = statusFilter === 'all' ? true
+          : statusFilter === 'blacklisted' ? !!u.blacklisted
+          : !u.blacklisted; // 'active'
+        return matchesSearch && matchesRole && matchesStatus;
+      })
+      .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
+  }, [users, debouncedSearch, roleFilter, statusFilter]);
+
   // ── If a user is selected, render the full-window detail view
   if (selectedUser) {
     return (
@@ -780,16 +811,13 @@ const UsersManager = () => {
     );
   }
 
-  const filteredUsers = users
-    .filter(u =>
-      u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
-
-  const totalPages   = Math.ceil(filteredUsers.length / perPage);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  const selectStyle = {
+    background: T.bg, border: `1px solid ${T.border}`, borderRadius: 30,
+    color: T.textPrimary, fontSize: 13, fontFamily: T.font, outline: 'none',
+    padding: '9px 14px', cursor: 'pointer',
+  };
 
   return (
     <div style={{
@@ -799,7 +827,7 @@ const UsersManager = () => {
       boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <h2 style={{ color: T.textPrimary, fontWeight: 800, fontSize: 22, margin: 0, letterSpacing: -0.3 }}>
             Manage Users
@@ -808,22 +836,35 @@ const UsersManager = () => {
             Click any row to view full user details
           </p>
         </div>
-        <div style={{ position: 'relative' }}>
-          <input
-            type="text"
-            placeholder="Search users…"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            style={{
-              paddingLeft: 38, paddingRight: 16, paddingTop: 9, paddingBottom: 9,
-              background: T.bg, border: `1px solid ${T.border}`, borderRadius: 30,
-              color: T.textPrimary, fontSize: 13, fontFamily: T.font, outline: 'none', width: 210,
-            }}
-          />
-          <Search size={15} style={{
-            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-            color: T.textSecondary,
-          }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Roles</option>
+            {roleOptions.map(r => (
+              <option key={r} value={r}>{roleMeta(r).label}</option>
+            ))}
+          </select>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="blacklisted">Blacklisted</option>
+          </select>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="Search users…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                paddingLeft: 38, paddingRight: 16, paddingTop: 9, paddingBottom: 9,
+                background: T.bg, border: `1px solid ${T.border}`, borderRadius: 30,
+                color: T.textPrimary, fontSize: 13, fontFamily: T.font, outline: 'none', width: 210,
+              }}
+            />
+            <Search size={15} style={{
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+              color: T.textSecondary,
+            }} />
+          </div>
         </div>
       </div>
 
@@ -832,6 +873,10 @@ const UsersManager = () => {
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: T.textSecondary, fontSize: 14 }}>
             Loading database records…
+          </div>
+        ) : error ? (
+          <div style={{ padding: 40, textAlign: 'center', color: T.red, fontSize: 14 }}>
+            {error}
           </div>
         ) : (
           <>
@@ -855,16 +900,12 @@ const UsersManager = () => {
                     <tr
                       key={user.id}
                       onClick={() => setSelectedUser(user)}
+                      className={user.blacklisted ? 'admin-row-alert' : 'admin-row'}
                       style={{
                         borderBottom: `1px solid ${T.border}`,
                         background: user.blacklisted ? 'rgba(239,68,68,0.05)' : 'transparent',
                         cursor: 'pointer',
-                        transition: 'background 0.12s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.background = user.blacklisted
-                        ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)'}
-                      onMouseLeave={e => e.currentTarget.style.background = user.blacklisted
-                        ? 'rgba(239,68,68,0.05)' : 'transparent'}
                     >
                       <td style={{ padding: '14px 16px' }}>
                         <span style={{
@@ -911,67 +952,15 @@ const UsersManager = () => {
               </tbody>
             </table>
 
-            {/* Pagination */}
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              marginTop: 20, fontSize: 12, color: T.textSecondary,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>Rows per page:</span>
-                {[20, 40, 60].map(n => (
-                  <button key={n} onClick={() => { setPerPage(n); setCurrentPage(1); }} style={{
-                    padding: '4px 12px', borderRadius: 20, border: 'none',
-                    background: perPage === n ? T.accent : T.bg,
-                    color: perPage === n ? T.bg : T.textSecondary,
-                    fontWeight: perPage === n ? 700 : 400,
-                    cursor: 'pointer', fontFamily: T.font, fontSize: 12,
-                  }}>
-                    {n}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>
-                  {filteredUsers.length === 0 ? '0' : (currentPage - 1) * perPage + 1}–
-                  {Math.min(currentPage * perPage, filteredUsers.length)} of {filteredUsers.length}
-                </span>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {['‹', '›'].map((arrow, ai) => {
-                    const disabled = ai === 0 ? currentPage === 1 : currentPage === totalPages || totalPages === 0;
-                    return (
-                      <button key={arrow}
-                        onClick={() => setCurrentPage(p => ai === 0 ? Math.max(p-1,1) : Math.min(p+1,totalPages))}
-                        disabled={disabled}
-                        style={{
-                          padding: '4px 10px', borderRadius: 20, border: 'none',
-                          background: T.bg, color: disabled ? T.border : T.textPrimary,
-                          cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: T.font,
-                          opacity: disabled ? 0.4 : 1,
-                        }}
-                      >{arrow}</button>
-                    );
-                  })}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                    .reduce((acc, p, idx, arr) => {
-                      if (idx > 0 && p - arr[idx-1] > 1) acc.push('...');
-                      acc.push(p); return acc;
-                    }, [])
-                    .map((p, idx) => p === '...'
-                      ? <span key={`e${idx}`} style={{ padding: '4px 6px', color: T.textSecondary }}>…</span>
-                      : (
-                        <button key={p} onClick={() => setCurrentPage(p)} style={{
-                          padding: '4px 10px', borderRadius: 20, border: 'none',
-                          background: currentPage === p ? T.accent : T.bg,
-                          color: currentPage === p ? T.bg : T.textSecondary,
-                          fontWeight: currentPage === p ? 700 : 400,
-                          cursor: 'pointer', fontFamily: T.font, fontSize: 12,
-                        }}>{p}</button>
-                      )
-                    )}
-                </div>
-              </div>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredUsers.length}
+              pageSize={perPage}
+              onPageChange={setCurrentPage}
+              pageSizeOptions={[20, 40, 60]}
+              onPageSizeChange={(n) => { setPerPage(n); setCurrentPage(1); }}
+              theme={{ text: T.textSecondary, bg: T.bg, accent: T.accent, font: T.font }}
+            />
           </>
         )}
       </div>

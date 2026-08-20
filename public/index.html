@@ -4,30 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- ── Primary Meta ─────────────────────────────────────────────── -->
+    <!-- ── Primary Meta ─────────────────────────────────────────────────
+         Title/description/canonical/OG/Twitter title+description are route-
+         specific, so each page sets its own via react-helmet-async (see
+         src/HomePage.js, InnovationPage.js, CreativeArtsPage.js,
+         EntertainmentPage.js, AppStore.js) instead of being hardcoded here —
+         this file is a single shared shell for every route in the SPA.
+         The <title> below is only the pre-hydration fallback (there's no
+         duplication risk for <title> since there's ever only one); the
+         page-specific one always wins once React mounts. -->
     <title>JR Innovations Zambia | Software, Design & Entertainment</title>
-    <meta
-      name="description"
-      content="JR Innovations is Zambia's premier multidisciplinary agency offering custom software development, creative design, mobile apps, and entertainment management. Based in Lusaka."
-    />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="JR Innovations Zambia" />
-    <link rel="canonical" href="https://www.jrinnovationszambia.com/" />
 
     <!-- ── Theme / Brand ────────────────────────────────────────────── -->
     <meta name="theme-color" content="#7c3aed" />
 
     <!-- ── Open Graph (Facebook, WhatsApp, LinkedIn) ────────────────── -->
+    <!-- type/image/locale/site_name don't vary by route, so they stay here -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.jrinnovationszambia.com/" />
-    <meta
-      property="og:title"
-      content="JR Innovations Zambia | Software, Design & Entertainment"
-    />
-    <meta
-      property="og:description"
-      content="Zambia's premier agency for custom software, mobile apps, creative design, and entertainment management. We turn ideas into reality."
-    />
     <meta
       property="og:image"
       content="https://www.jrinnovationszambia.com/og-image.png"
@@ -39,14 +34,6 @@
 
     <!-- ── Twitter / X Card ─────────────────────────────────────────── -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="JR Innovations Zambia | Software, Design & Entertainment"
-    />
-    <meta
-      name="twitter:description"
-      content="Zambia's premier agency for custom software, mobile apps, creative design, and entertainment management."
-    />
     <meta
       name="twitter:image"
       content="https://www.jrinnovationszambia.com/og-image.png"

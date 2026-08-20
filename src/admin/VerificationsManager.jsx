@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ShieldCheck, Search } from 'lucide-react';
 import { db } from '../Config/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { UserDetailView, T, roleMeta, fmt, toMillis } from './UsersManager';
+import { useDebounce } from './shared/useDebounce';
+import { Pagination } from './shared/Pagination';
 
 // Roles that go through identity verification. Kept in sync with VERIFIABLE_ROLES
 // in UsersManager.jsx (Firestore `in` accepts up to 10 values).
@@ -27,9 +29,14 @@ const FILTERS = [
 const VerificationsManager = () => {
   const [users, setUsers]         = useState([]);
   const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
   const [filter, setFilter]       = useState('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage]         = useState(20);
+
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
   const fetchUsers = async () => {
     try {
@@ -38,12 +45,14 @@ const VerificationsManager = () => {
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.error('Error fetching verification accounts:', e);
+      setError('Failed to load verification accounts.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { setCurrentPage(1); }, [filter, debouncedSearch]);
 
   const patchUser = (userId, updates) => {
     setUsers(u => u.map(x => x.id === userId ? { ...x, ...updates } : x));
@@ -52,6 +61,18 @@ const VerificationsManager = () => {
 
   const handleVerified   = (userId, updates) => patchUser(userId, updates);
   const handleBlacklisted = (userId, reason) => patchUser(userId, { blacklisted: true, blacklistReason: reason });
+
+  const filtered = useMemo(() => {
+    const t = debouncedSearch.toLowerCase();
+    return users
+      .filter(u => filter === 'all' ? true : statusOf(u) === filter)
+      .filter(u => !t
+        || u.username?.toLowerCase().includes(t)
+        || u.email?.toLowerCase().includes(t)
+        || u.nrcNumber?.toLowerCase().includes(t)
+      )
+      .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
+  }, [users, filter, debouncedSearch]);
 
   // ── Detail view (defaults straight to the Verification tab) ──
   if (selectedUser) {
@@ -69,16 +90,7 @@ const VerificationsManager = () => {
 
   const pendingCount = users.filter(u => statusOf(u) === 'pending').length;
 
-  const filtered = users
-    .filter(u => filter === 'all' ? true : statusOf(u) === filter)
-    .filter(u => {
-      const t = searchTerm.toLowerCase();
-      return !t
-        || u.username?.toLowerCase().includes(t)
-        || u.email?.toLowerCase().includes(t)
-        || u.nrcNumber?.toLowerCase().includes(t);
-    })
-    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt)); // newest first
+  const paginated = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
 
   return (
     <div style={{
@@ -137,7 +149,12 @@ const VerificationsManager = () => {
           <div style={{ padding: 40, textAlign: 'center', color: T.textSecondary, fontSize: 14 }}>
             Loading verification queue…
           </div>
+        ) : error ? (
+          <div style={{ padding: 40, textAlign: 'center', color: T.red, fontSize: 14 }}>
+            {error}
+          </div>
         ) : (
+          <>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${T.border}` }}>
@@ -152,17 +169,14 @@ const VerificationsManager = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(user => {
+              {paginated.map(user => {
                 const m = roleMeta(user.role);
                 const s = statusOf(user);
                 const sm = STATUS_META[s] || STATUS_META.pending;
                 return (
-                  <tr key={user.id} onClick={() => setSelectedUser(user)} style={{
-                    borderBottom: `1px solid ${T.border}`, cursor: 'pointer', transition: 'background 0.12s',
-                  }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
+                  <tr key={user.id} onClick={() => setSelectedUser(user)} className="admin-row" style={{
+                    borderBottom: `1px solid ${T.border}`, cursor: 'pointer',
+                  }}>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ color: T.textPrimary, fontWeight: 600 }}>
                         {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.username || 'Unknown')}
@@ -196,6 +210,16 @@ const VerificationsManager = () => {
               )}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filtered.length}
+            pageSize={perPage}
+            onPageChange={setCurrentPage}
+            pageSizeOptions={[20, 40, 60]}
+            onPageSizeChange={(n) => { setPerPage(n); setCurrentPage(1); }}
+            theme={{ text: T.textSecondary, bg: T.bg, accent: T.accent, font: T.font }}
+          />
+          </>
         )}
       </div>
     </div>

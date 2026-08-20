@@ -1,9 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Star, Download, AlertCircle, Smartphone, Shield, Zap, Lightbulb, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from './Config/firebaseConfig'; // adjust path
+
+// ─── Release config: change these in ONE place per release ──────────────────
+const APP_VERSION   = '2.0.2';
+const APP_UPDATED   = 'June 26 2026';
+const APP_SIZE      = '86.3 MB';
+const APK_FILE_NAME = 'yanga.v2.0.2.apk';
+const APK_DOWNLOAD_URL =
+  'https://github.com/33rdstar/jrinnovations-website/releases/download/YangaV2.0.0/yanga.v2.0.2.apk';
 
 // ─── Hook: lazy section with IntersectionObserver ───────────────────────────
 const useLazySection = (options = {}) => {
@@ -263,10 +272,7 @@ const AppStore = () => {
   const [galleryRef, galleryVisible] = useLazySection({ threshold: 0.1, rootMargin: '200px' });
 
   // Static data memoization
-  const DOWNLOAD_URL = useMemo(
-    () => 'https://github.com/33rdstar/jrinnovations-website/releases/download/YangaV2.0.0/yanga.v2.0.0.apk',
-    []
-  );
+  const DOWNLOAD_URL = useMemo(() => APK_DOWNLOAD_URL, []);
 
   const notifications = useMemo(
     () => [
@@ -288,14 +294,14 @@ const AppStore = () => {
       price: "Free",
       description: "Meet elegance and modern day convenience on Yanga! Find property to rent, sell property or just go shopping on the marketplace.\n\nLooking for a plumber, carpenter or a maid? Find exactly who you are looking for on the Services Yanga feature. Check the weather, keep notes and so much more!",
       category: "Real Estate",
-      apkFileName: "yanga_mobile_app(v1).apk",
-      size: "85 MB",
-      version: "2.0.0",
-      lastUpdated: "July 21 2025",
+      apkFileName: APK_FILE_NAME,
+      size: APP_SIZE,
+      version: APP_VERSION,
+      lastUpdated: APP_UPDATED,
       permissions: ["Internet", "Location", "Storage", "Camera"],
       features: ["Property Search", "Marketplace", "Services Directory", "Weather", "Notes"],
-      screenshots: ["/ss1.png", "/ss2.jpg", "/ss3.jpg", "/ss4.jpg"],
-      changelog: ["Fixed property search filters", "Added Services Directory", "Improved marketplace performance", "Bug fixes and optimizations"]
+      screenshots: ["/ss1.jpg", "/ss2.jpg", "/ss3.jpg", "/ss4.jpg"],
+      changelog: ["Added verified agent badge with ZIEA number", "Added in-app availability messaging", "Improved permissions and performance", "Bug fixes and optimizations"]
     }],
     []
   );
@@ -385,6 +391,25 @@ const AppStore = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+      <Helmet>
+        <title>JR App Store — Download Yanga | JR Innovations Zambia</title>
+        <meta
+          name="description"
+          content="Download the Yanga app for Android — Zambia's real estate and marketplace platform from JR Innovations. Browse verified listings and agents."
+        />
+        <link rel="canonical" href="https://www.jrinnovationszambia.com/app-store" />
+        <meta property="og:title" content="JR App Store — Download Yanga | JR Innovations Zambia" />
+        <meta
+          property="og:description"
+          content="Download the Yanga app for Android — Zambia's real estate and marketplace platform from JR Innovations."
+        />
+        <meta property="og:url" content="https://www.jrinnovationszambia.com/app-store" />
+        <meta name="twitter:title" content="JR App Store — Download Yanga | JR Innovations Zambia" />
+        <meta
+          name="twitter:description"
+          content="Download the Yanga app for Android — Zambia's real estate and marketplace platform from JR Innovations."
+        />
+      </Helmet>
       {/* Header */}
       <header className="relative overflow-hidden backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(147, 51, 234, 0.9) 25%, rgba(236, 72, 153, 0.9) 50%, rgba(251, 146, 60, 0.9) 75%, rgba(34, 197, 94, 0.9) 100%)' }}>
         <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10"></div>

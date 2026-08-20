@@ -2,10 +2,10 @@
 // Growth dashboard for the Accounts area. Hand-rolled SVG charts (no charting
 // dependency) over Firestore data, with a Daily / Monthly / Yearly toggle.
 // Metrics: Revenue, New sign-ups, New listings, Contact reveals.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../Config/firebaseConfig';
-import { TrendingUp, Users as UsersIcon, Home as HomeIcon, Eye } from 'lucide-react';
+import { TrendingUp, Users as UsersIcon, Home as HomeIcon, Eye, RefreshCw } from 'lucide-react';
 import { T, toMillis } from './UsersManager';
 
 const GRANULARITIES = [
@@ -147,33 +147,45 @@ export default function AdminAnalytics() {
   const [raw, setRaw] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastFetchedAt, setLastFetchedAt] = useState(null);
+  const activeRef = useRef(true);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const [txn, users, houses, products] = await Promise.all([
-          getDocs(collection(db, 'transactions')),
-          getDocs(collection(db, 'users')),
-          getDocs(collection(db, 'houses')),
-          getDocs(collection(db, 'products')),
-        ]);
-        if (!active) return;
-        setRaw({
-          transactions: txn.docs.map((d) => d.data()),
-          users: users.docs.map((d) => d.data()),
-          houses: houses.docs.map((d) => d.data()),
-          products: products.docs.map((d) => d.data()),
-        });
-      } catch (e) {
-        console.error('Analytics load failed:', e);
-        if (active) setError('Failed to load analytics data.');
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
+  useEffect(() => () => { activeRef.current = false; }, []);
+
+  // Shared by the mount effect and the manual Refresh button. NOTE: the 4
+  // getDocs calls below are intentionally left unbounded (no date-range
+  // where() clause) — functions/index.js writes officer-created users'
+  // createdAt as a plain ISO string while other flows use serverTimestamp(),
+  // so a server-side Timestamp range filter would silently drop those rows.
+  // Client-side bucketing (below) already tolerates the mixed shapes via
+  // toMillis(); that's the correct place to handle it, not a Firestore query.
+  const loadAnalytics = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [txn, users, houses, products] = await Promise.all([
+        getDocs(collection(db, 'transactions')),
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'houses')),
+        getDocs(collection(db, 'products')),
+      ]);
+      if (!activeRef.current) return;
+      setRaw({
+        transactions: txn.docs.map((d) => d.data()),
+        users: users.docs.map((d) => d.data()),
+        houses: houses.docs.map((d) => d.data()),
+        products: products.docs.map((d) => d.data()),
+      });
+      setLastFetchedAt(new Date());
+    } catch (e) {
+      console.error('Analytics load failed:', e);
+      if (activeRef.current) setError('Failed to load analytics data.');
+    } finally {
+      if (activeRef.current) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
   const { labels, series } = useMemo(() => {
     const buckets = buildBuckets(granularity);
@@ -230,17 +242,40 @@ export default function AdminAnalytics() {
             <p style={{ color: T.textSecondary, fontSize: 12, margin: '4px 0 0' }}>Growth & performance · {windowLabel}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, background: T.bgCard, padding: 5, borderRadius: 14, border: `1px solid ${T.border}` }}>
-          {GRANULARITIES.map((g) => (
-            <button key={g.key} onClick={() => setGranularity(g.key)} style={{
-              padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              fontFamily: T.font, fontSize: 13, fontWeight: 700,
-              background: granularity === g.key ? T.accent : 'transparent',
-              color: granularity === g.key ? T.bg : T.textSecondary,
-            }}>
-              {g.label}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <button
+              onClick={loadAnalytics}
+              disabled={loading}
+              title="Refresh analytics data"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 10, border: `1px solid ${T.border}`,
+                background: T.bgCard, color: T.textPrimary, fontFamily: T.font, fontSize: 12, fontWeight: 600,
+                cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
+              }}
+            >
+              <RefreshCw size={13} />
+              Refresh
             </button>
-          ))}
+            {lastFetchedAt && (
+              <span style={{ color: T.textSecondary, fontSize: 10 }}>
+                Updated {lastFetchedAt.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 6, background: T.bgCard, padding: 5, borderRadius: 14, border: `1px solid ${T.border}` }}>
+            {GRANULARITIES.map((g) => (
+              <button key={g.key} onClick={() => setGranularity(g.key)} style={{
+                padding: '7px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                fontFamily: T.font, fontSize: 13, fontWeight: 700,
+                background: granularity === g.key ? T.accent : 'transparent',
+                color: granularity === g.key ? T.bg : T.textSecondary,
+              }}>
+                {g.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

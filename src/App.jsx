@@ -1,10 +1,9 @@
 import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './Auth/AuthContext';
 
-// Public Pages (HomePage, Navigation & PageTransition load eagerly — needed on first paint)
+// Public Pages (HomePage & Navigation load eagerly — needed on first paint)
 import HomePage from './HomePage';
-import PageTransition from './PageTransition';
 import Navigation from './Navigation';
 
 // Admin Guards
@@ -30,6 +29,13 @@ const EntertainmentPage = lazy(() => import('./EntertainmentPage'));
 const AppStore = lazy(() => import('./AppStore'));
 
 
+// Resets scroll position on route change (client-side navigation doesn't do this by default).
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
+
 const App = () => {
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
@@ -46,17 +52,16 @@ const App = () => {
           <Route path="/*" element={
             <>
               <Navigation />
-              <PageTransition>
-                <Suspense fallback={<div className="p-8">Loading…</div>}>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/innovation" element={<InnovationPage />} />
-                    <Route path="/creative-arts" element={<CreativeArtsPage />} />
-                    <Route path="/entertainment" element={<EntertainmentPage />} />
-                    <Route path="/app-store" element={<AppStore />} />
-                  </Routes>
-                </Suspense>
-              </PageTransition>
+              <ScrollToTop />
+              <Suspense fallback={<div className="p-8">Loading…</div>}>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/innovation" element={<InnovationPage />} />
+                  <Route path="/creative-arts" element={<CreativeArtsPage />} />
+                  <Route path="/entertainment" element={<EntertainmentPage />} />
+                  <Route path="/app-store" element={<AppStore />} />
+                </Routes>
+              </Suspense>
             </>
           } />
 

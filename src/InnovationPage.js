@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Code, Smartphone, Globe, Lightbulb, ShoppingCart, Network } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import Navigation from './Navigation';
@@ -303,6 +304,25 @@ const InnovationPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white relative">
+      <Helmet>
+        <title>Innovation & Technology | JR Innovations Zambia</title>
+        <meta
+          name="description"
+          content="Custom software development, mobile apps, and cutting-edge technology solutions from JR Innovations — Zambia's premier digital agency based in Lusaka."
+        />
+        <link rel="canonical" href="https://www.jrinnovationszambia.com/innovation" />
+        <meta property="og:title" content="Innovation & Technology | JR Innovations Zambia" />
+        <meta
+          property="og:description"
+          content="Custom software development, mobile apps, and cutting-edge technology solutions from JR Innovations Zambia."
+        />
+        <meta property="og:url" content="https://www.jrinnovationszambia.com/innovation" />
+        <meta name="twitter:title" content="Innovation & Technology | JR Innovations Zambia" />
+        <meta
+          name="twitter:description"
+          content="Custom software development, mobile apps, and cutting-edge technology solutions from JR Innovations Zambia."
+        />
+      </Helmet>
       <AnimatedBackground />
       <Navigation />
 
