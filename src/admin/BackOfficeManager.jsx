@@ -3,7 +3,7 @@ import { UserPlus, Copy, Check, X, Trash2, ShieldCheck, Eye, EyeOff, RefreshCw }
 import { db } from '../Config/firebaseConfig';
 import {
   collection, getDocs, doc, deleteDoc,
-  setDoc, query, where
+  query, where
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useAuth } from '../Auth/AuthContext';

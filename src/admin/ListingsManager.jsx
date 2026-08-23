@@ -264,7 +264,7 @@ const Detail = ({ label, value }) => (
 
 // ── Main Component ────────────────────────────────────────────────
 const ListingsManager = () => {
-  const { isManager, currentUser } = useAuth();  // currentUser needed for verifiedBy stamp
+  const {currentUser } = useAuth();  // currentUser needed for verifiedBy stamp
   const [listings, setListings] = useState([]);
   const [listers, setListers] = useState({}); // uid → user doc
   const [loading, setLoading] = useState(true);

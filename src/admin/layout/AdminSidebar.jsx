@@ -39,7 +39,7 @@ const AdminSidebar = () => {
     if (!isAllowed && defaultPath) {
       navigate(`/portal-mgmt-xyz99/${defaultPath}`, { replace: true });
     }
-  }, [location.pathname, userRole]);
+  }, [location.pathname, userRole, defaultPath, navigate, visibleItems]);
 
   return (
     <div className="w-60 h-screen flex flex-col fixed"
