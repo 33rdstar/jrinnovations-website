@@ -2,6 +2,7 @@
   "name": "jrinnovations-website",
   "compatibility_date": "2026-08-23",
   "assets": {
-    "directory": "./build"
+    "directory": "./build",
+    "not_found_handling": "single-page-application"
   }
 }
