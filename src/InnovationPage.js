@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Code, Smartphone, Globe, Lightbulb, ShoppingCart, Network } from 'lucide-react';

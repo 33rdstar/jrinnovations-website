@@ -32,7 +32,7 @@ const useLazySection = (options = {}) => {
     const el = ref.current;
     if (el) observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [options]);
 
   return [ref, visible];
 };
