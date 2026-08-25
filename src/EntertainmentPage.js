@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Users, Calendar, Video, Mic2, Handshake, Radio } from 'lucide-react';
 
 import AnimatedBackground from './AnimatedBackground';
@@ -229,6 +230,25 @@ const EntertainmentPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white relative">
+      <Helmet>
+        <title>Entertainment & Management | JR Innovations Zambia</title>
+        <meta
+          name="description"
+          content="Turning talent into success stories — entertainment and artist management services from JR Innovations Zambia."
+        />
+        <link rel="canonical" href="https://www.jrinnovationszambia.com/entertainment" />
+        <meta property="og:title" content="Entertainment & Management | JR Innovations Zambia" />
+        <meta
+          property="og:description"
+          content="Turning talent into success stories — entertainment and artist management services from JR Innovations Zambia."
+        />
+        <meta property="og:url" content="https://www.jrinnovationszambia.com/entertainment" />
+        <meta name="twitter:title" content="Entertainment & Management | JR Innovations Zambia" />
+        <meta
+          name="twitter:description"
+          content="Turning talent into success stories — entertainment and artist management services from JR Innovations Zambia."
+        />
+      </Helmet>
       <AnimatedBackground />
       <Navigation />
 
@@ -249,7 +269,7 @@ const EntertainmentPage = () => {
           </div>
 
           <img
-            src="/hiphop_Mockup1.png"
+            src="/hiphop-mockup1.jpg"
             alt="Entertainment preview"
             fetchpriority="high"
             decoding="async"

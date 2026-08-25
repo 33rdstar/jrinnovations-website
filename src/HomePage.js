@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Mail, Phone, MessageCircle, Download } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import Navigation from './Navigation';
@@ -160,6 +161,25 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white relative pb-16 md:pb-0">
+      <Helmet>
+        <title>JR Innovations Zambia | Software, Design & Entertainment</title>
+        <meta
+          name="description"
+          content="JR Innovations is Zambia's premier multidisciplinary agency offering custom software development, creative design, mobile apps, and entertainment management. Based in Lusaka."
+        />
+        <link rel="canonical" href="https://www.jrinnovationszambia.com/" />
+        <meta property="og:title" content="JR Innovations Zambia | Software, Design & Entertainment" />
+        <meta
+          property="og:description"
+          content="Zambia's premier agency for custom software, mobile apps, creative design, and entertainment management. We turn ideas into reality."
+        />
+        <meta property="og:url" content="https://www.jrinnovationszambia.com/" />
+        <meta name="twitter:title" content="JR Innovations Zambia | Software, Design & Entertainment" />
+        <meta
+          name="twitter:description"
+          content="Zambia's premier agency for custom software, mobile apps, creative design, and entertainment management."
+        />
+      </Helmet>
       <AnimatedBackground />
       <Navigation />
 
@@ -181,7 +201,7 @@ const HomePage = () => {
             <img
               src="/laptop-mockup2.png"
               alt="Yanga app preview"
-              fetchpriority="high"
+              fetchPriority="high"
               decoding="async"
               width="672"
               height="420"

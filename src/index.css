@@ -23,3 +23,8 @@ html {
   scroll-behavior: smooth;
   font-family: 'DM Sans', sans-serif;
 }
+
+/* Admin table row hover (CSS-only — avoids recreating onMouseEnter/Leave
+   closures on every row render in the admin portal's Users/Verifications tables). */
+.admin-row:hover { background: rgba(255, 255, 255, 0.04); }
+.admin-row-alert:hover { background: rgba(239, 68, 68, 0.1); }

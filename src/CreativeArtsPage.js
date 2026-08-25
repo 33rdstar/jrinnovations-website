@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Palette, Image, CreditCard, FileText, Share2, Megaphone } from 'lucide-react';
 
 import AnimatedBackground from './AnimatedBackground';
@@ -232,6 +233,25 @@ const CreativeArtsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white relative">
+      <Helmet>
+        <title>Creative Arts & Design | JR Innovations Zambia</title>
+        <meta
+          name="description"
+          content="Stunning brochures, branding, and visual design that tell your story — creative design services from JR Innovations Zambia."
+        />
+        <link rel="canonical" href="https://www.jrinnovationszambia.com/creative-arts" />
+        <meta property="og:title" content="Creative Arts & Design | JR Innovations Zambia" />
+        <meta
+          property="og:description"
+          content="Stunning brochures, branding, and visual design that tell your story — creative design services from JR Innovations Zambia."
+        />
+        <meta property="og:url" content="https://www.jrinnovationszambia.com/creative-arts" />
+        <meta name="twitter:title" content="Creative Arts & Design | JR Innovations Zambia" />
+        <meta
+          name="twitter:description"
+          content="Stunning brochures, branding, and visual design that tell your story — creative design services from JR Innovations Zambia."
+        />
+      </Helmet>
       <AnimatedBackground />
       <Navigation />
 
