@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Search, X, Send, CheckCircle,
-  AlertCircle, Bug, Flag, HelpCircle, Clock, Inbox, Image as ImageIcon,
+  AlertCircle, Bug, Flag, HelpCircle, Clock, Inbox, Image as ImageIcon, KeyRound,
 } from "lucide-react";
 import { db } from "../Config/firebaseConfig";
 import {
@@ -17,6 +17,7 @@ const QUERY_TYPES = [
   { key: "report",  label: "User Report", icon: <Flag size={14} />,       color: "bg-orange-100 text-orange-700"},
   { key: "inquiry", label: "Inquiry",     icon: <HelpCircle size={14} />, color: "bg-blue-100 text-blue-700"  },
   { key: "other",   label: "Other",       icon: <AlertCircle size={14} />,color: "bg-gray-100 text-gray-700"  },
+  { key: "password_reset", label: "Password Reset", icon: <KeyRound size={14} />, color: "bg-purple-100 text-purple-700" },
 ];
 
 const STATUSES = [
@@ -25,7 +26,8 @@ const STATUSES = [
   { key: "resolved",    label: "Resolved",    color: "bg-green-100 text-green-700",  icon: <CheckCircle size={13} /> },
 ];
 
-const typeMeta  = (k) => QUERY_TYPES.find((t) => t.key === k) || QUERY_TYPES[3];
+const typeMeta  = (k) =>
+  QUERY_TYPES.find((t) => t.key === k) || QUERY_TYPES.find((t) => t.key === "other");
 const statusMeta = (k) => STATUSES.find((s) => s.key === k)   || STATUSES[0];
 
 const fmtDate = (ts) => {
@@ -62,6 +64,57 @@ const MsgBubble = ({ msg, isAdmin }) => (
   </div>
 );
 
+// ── Password-reset verification banner ───────────────────────────
+// Shown on tickets opened from the app's "Forgot password" screen. The server
+// records whether each detail the user typed matched the account; staff still
+// confirm the person by contacting the phone number on file.
+const CheckRow = ({ label, ok, naText }) => (
+  <div className="flex items-center gap-2 text-sm">
+    {ok === null || ok === undefined ? (
+      <span className="w-5 text-center text-gray-400">–</span>
+    ) : ok ? (
+      <span className="w-5 text-center text-green-600 font-bold">✓</span>
+    ) : (
+      <span className="w-5 text-center text-red-600 font-bold">✗</span>
+    )}
+    <span className="text-gray-700">{label}</span>
+    {(ok === null || ok === undefined) && naText && (
+      <span className="text-xs text-gray-400">({naText})</span>
+    )}
+  </div>
+);
+
+const PasswordResetBanner = ({ ticket, submitter, onReset }) => {
+  const v = ticket.verification || {};
+  return (
+    <div className="px-5 py-3 bg-purple-50 border-b border-purple-100">
+      <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2">
+        Identity checks from the request
+      </p>
+      <div className="space-y-1 mb-3">
+        <CheckRow label="Phone number matches an account" ok={v.phoneMatch} />
+        <CheckRow label="Name matches the account" ok={v.nameMatch} />
+        <CheckRow label="NRC number matches" ok={v.nrcMatch} naText="no NRC on file for this account" />
+      </div>
+      <p className="text-xs text-gray-600 leading-relaxed mb-3">
+        These details can be looked up by others, so they are not proof on their own. Contact
+        the user on the phone number <b>on file</b>
+        {submitter?.phoneNumber ? <> ({submitter.phoneNumber})</> : null} by call or WhatsApp
+        to confirm it is them, and send any temporary password only to that number.
+      </p>
+      {ticket.status !== "resolved" && (
+        <button
+          onClick={onReset}
+          disabled={!submitter}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-all disabled:opacity-50"
+        >
+          <KeyRound size={15} /> Reset password…
+        </button>
+      )}
+    </div>
+  );
+};
+
 // ── Thread Modal ──────────────────────────────────────────────────
 const ThreadModal = ({
   ticket, submitter, onClose, onStatusChange, adminUser,
@@ -72,6 +125,7 @@ const ThreadModal = ({
   const [saving, setSaving]     = useState(false);
   const [status, setStatus]     = useState(ticket.status || "open");
   const [viewingUser, setViewingUser] = useState(false);
+  const [userTab, setUserTab] = useState("profile");
   const bottomRef = React.useRef(null);
   const tM = typeMeta(ticket.type);
   const sM = statusMeta(status);
@@ -173,7 +227,7 @@ const ThreadModal = ({
           {/* Submitter — click to open full user details */}
           {submitter && (
             <button
-              onClick={() => setViewingUser(true)}
+              onClick={() => { setUserTab("profile"); setViewingUser(true); }}
               className="w-full px-5 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-3 text-sm hover:bg-gray-100 transition-colors text-left"
               title="View user details"
             >
@@ -186,6 +240,14 @@ const ThreadModal = ({
                 {submitter.phoneNumber && ` · ${submitter.phoneNumber}`}
               </span>
             </button>
+          )}
+
+          {ticket.type === "password_reset" && (
+            <PasswordResetBanner
+              ticket={ticket}
+              submitter={submitter}
+              onReset={() => { setUserTab("password"); setViewingUser(true); }}
+            />
           )}
 
           {/* Thread */}
@@ -260,6 +322,8 @@ const ThreadModal = ({
       {viewingUser && submitter && (
         <UserDetailView
           user={submitter}
+          initialTab={userTab}
+          resetTicketId={ticket.id}
           onBack={() => setViewingUser(false)}
           onBlacklisted={(uid, reason) => onSubmitterBlacklisted?.(uid, reason)}
           onDeleted={(uid) => {

@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../Config/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import app, { db } from '../Config/firebaseConfig';
+
+// The app's callable functions live in europe-west1.
+const appFunctions = getFunctions(app, 'europe-west1');
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -18,13 +22,15 @@ const AdminLogin = () => {
   // is (resolved by AuthContext + enforced by the route guards). An email can
   // also be entered directly so officer accounts created before usernames
   // existed still work.
+  //
+  // The lookup runs before sign-in, when the Firestore rules don't allow reading
+  // `users`, so it goes through the resolveStaffLogin Cloud Function (which only
+  // ever resolves staff accounts).
   const resolveEmail = async (identifier) => {
     if (identifier.includes('@')) return identifier;
-    const snap = await getDocs(
-      query(collection(db, 'users'), where('username', '==', identifier))
-    );
-    if (snap.empty) return null;
-    return snap.docs[0].data().email || null;
+    const resolveStaffLogin = httpsCallable(appFunctions, 'resolveStaffLogin');
+    const res = await resolveStaffLogin({ username: identifier });
+    return res.data.email || null;
   };
 
   const handleLogin = async (e) => {

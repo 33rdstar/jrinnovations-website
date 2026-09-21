@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Trash2, Search, X, User, Mail, Phone, CreditCard,
-  Calendar, Shield, ShieldOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle
+  Calendar, Shield, ShieldOff, ShieldCheck, ArrowLeft, AlertCircle, CheckCircle,
+  Copy
 } from 'lucide-react';
-import { db, auth } from '../Config/firebaseConfig';
+import app, { db, auth } from '../Config/firebaseConfig';
 import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useDebounce } from './shared/useDebounce';
 import { Pagination } from './shared/Pagination';
 
@@ -83,9 +85,21 @@ const BLACKLIST_REASONS = [
 // Roles whose accounts go through admin identity verification.
 const VERIFIABLE_ROLES = ['agent', 'property_owner', 'property owner', 'landlord'];
 
+// Staff passwords can't be reset from here — mirrors the server-side check in
+// the adminResetUserPassword Cloud Function.
+const STAFF_ROLES = [
+  'admin', 'manager', 'registration_officer', 'customer_care', 'auditor', 'officer',
+];
+
+// The app's callable functions live in europe-west1.
+const appFunctions = getFunctions(app, 'europe-west1');
+
 // ── Full-window User Detail View ───────────────────────────────────
+// `resetTicketId` — when opened from a password-reset support ticket, lets the
+// reset be linked back to that ticket.
 export const UserDetailView = ({
   user, onBack, onBlacklisted, onDeleted, onVerified, initialTab = 'profile',
+  resetTicketId = null,
 }) => {
   const [tab, setTab]       = useState(initialTab);
   const [blReason, setBlReason] = useState(BLACKLIST_REASONS[0]);
@@ -95,6 +109,8 @@ export const UserDetailView = ({
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError]   = useState('');
   const [pwDone, setPwDone]     = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
+  const [pwCopied, setPwCopied] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // ── ID-document lightbox state ──
@@ -191,16 +207,36 @@ export const UserDetailView = ({
     finally { setBlLoading(false); }
   };
 
+  // App users sign in with a placeholder address, so a reset *email* can't reach
+  // them. Instead a Cloud Function sets a one-time temporary password, shown to
+  // staff once, to be passed on via the phone number on file.
   const handlePasswordReset = async () => {
+    const who = user.username || user.email || 'this user';
+    if (!window.confirm(
+      `Generate a temporary password for ${who}?\n\n` +
+      'Their current password will stop working and they will be signed out of all devices.'
+    )) return;
+
     setPwError('');
     setPwLoading(true);
     try {
-      const { sendPasswordResetEmail } = await import('firebase/auth');
-      await sendPasswordResetEmail(auth, user.email);
+      const resetUserPassword = httpsCallable(appFunctions, 'adminResetUserPassword');
+      const res = await resetUserPassword({ uid: user.id, ticketId: resetTicketId });
+      setTempPassword(res.data.tempPassword);
       setPwDone(true);
     } catch (e) {
-      setPwError(e.message || 'Failed to send reset email.');
+      setPwError(e.message || 'Failed to reset the password.');
     } finally { setPwLoading(false); }
+  };
+
+  const handleCopyPassword = async () => {
+    try {
+      await navigator.clipboard.writeText(tempPassword);
+      setPwCopied(true);
+      setTimeout(() => setPwCopied(false), 2000);
+    } catch (_) {
+      // Clipboard can be blocked; the password is still on screen to copy by hand.
+    }
   };
 
   const handleDelete = async () => {
@@ -625,15 +661,47 @@ export const UserDetailView = ({
         {tab === 'password' && (
           <div style={{ maxWidth: 500 }}>
             <div style={{ background: T.bgCard, borderRadius: 16, border: `1px solid ${T.border}`, padding: 28 }}>
-              {pwDone ? (
-                <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
+              {STAFF_ROLES.includes(user.role) ? (
+                <div style={{ color: T.textSecondary, fontSize: 14, lineHeight: 1.6 }}>
+                  This is a staff account. Staff passwords can't be reset from here.
+                </div>
+              ) : pwDone ? (
+                <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
                   <CheckCircle size={44} style={{ color: T.green, marginBottom: 14 }} />
-                  <div style={{ color: T.textPrimary, fontWeight: 700, fontSize: 18, marginBottom: 8 }}>
-                    Reset Email Sent
+                  <div style={{ color: T.textPrimary, fontWeight: 700, fontSize: 18, marginBottom: 6 }}>
+                    Temporary Password Ready
                   </div>
-                  <div style={{ color: T.textSecondary, fontSize: 14 }}>
-                    A password reset link was sent to{' '}
-                    <span style={{ color: T.accent }}>{user.email}</span>
+                  <div style={{ color: T.textSecondary, fontSize: 13, marginBottom: 18 }}>
+                    For <span style={{ color: T.textPrimary }}>{user.username || user.email}</span>
+                  </div>
+                  <div style={{
+                    background: T.bg, border: `1px dashed ${T.accent}`, borderRadius: 12,
+                    padding: '16px 12px', marginBottom: 12,
+                    fontFamily: "'Consolas','Courier New',monospace",
+                    fontSize: 28, letterSpacing: 3, color: T.accent, userSelect: 'all',
+                  }}>
+                    {tempPassword}
+                  </div>
+                  <button onClick={handleCopyPassword} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '8px 18px', borderRadius: 10, marginBottom: 18,
+                    background: 'none', border: `1px solid ${T.border}`,
+                    color: T.textPrimary, cursor: 'pointer', fontFamily: T.font, fontSize: 13,
+                  }}>
+                    <Copy size={14} /> {pwCopied ? 'Copied!' : 'Copy password'}
+                  </button>
+                  <div style={{
+                    background: T.accentSub, border: `1px solid rgba(245,166,35,0.25)`,
+                    borderRadius: 12, padding: '12px 16px', textAlign: 'left',
+                    color: T.textSecondary, fontSize: 13, lineHeight: 1.6,
+                  }}>
+                    <div style={{ color: T.accent, fontWeight: 700, marginBottom: 4 }}>
+                      Shown once — it can't be viewed again.
+                    </div>
+                    Send it <span style={{ color: T.textPrimary }}>only to the phone number on the account</span>
+                    {user.phoneNumber && (<> (<span style={{ color: T.textPrimary }}>{user.phoneNumber}</span>)</>)}
+                    {' '}by call or WhatsApp — never to a different number the requester gives you.
+                    They will be asked to choose their own password when they sign in.
                   </div>
                 </div>
               ) : (
@@ -645,9 +713,11 @@ export const UserDetailView = ({
                   }}>
                     <AlertCircle size={16} style={{ color: T.accent, flexShrink: 0, marginTop: 1 }} />
                     <div style={{ color: T.textSecondary, fontSize: 13, lineHeight: 1.6 }}>
-                      Firebase Client SDK cannot change another user's password directly.
-                      This will send a <span style={{ color: T.accent }}>password reset email</span> to{' '}
-                      <span style={{ color: T.textPrimary }}>{user.email}</span>.
+                      This sets a <span style={{ color: T.accent }}>temporary password</span> for{' '}
+                      <span style={{ color: T.textPrimary }}>{user.username || user.email}</span>.
+                      Their current password stops working and they are signed out of all devices.
+                      Before sending it, confirm you are speaking to the account owner by contacting the phone
+                      number on file{user.phoneNumber && (<> (<span style={{ color: T.textPrimary }}>{user.phoneNumber}</span>)</>)}.
                     </div>
                   </div>
 
@@ -674,7 +744,7 @@ export const UserDetailView = ({
                       color: T.bg, cursor: 'pointer', fontWeight: 700,
                       fontFamily: T.font, fontSize: 13, opacity: pwLoading ? 0.7 : 1,
                     }}>
-                      {pwLoading ? 'Sending…' : 'Send Reset Email'}
+                      {pwLoading ? 'Generating…' : 'Generate Temporary Password'}
                     </button>
                   </div>
                 </>
