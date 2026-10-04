@@ -20,7 +20,7 @@ const AdminSidebar = () => {
   const navItems = [
     { path: 'users',       icon: <Users size={18} />,         label: 'Manage users',     section: 'Management', allowedUsers: ['manager','admin', 'registration_officer', 'customer_care'] },
     { path: 'listings',    icon: <Home size={18} />,          label: 'Real estate',      section: null,         allowedUsers: ['manager', 'admin', 'customer_care'] },
-    { path: 'stays',       icon: <Hotel size={18} />,         label: 'Stays',            section: null,         allowedUsers: ['manager','admin'] },
+    { path: 'stays',       icon: <Hotel size={18} />,         label: 'Stays',            section: null,         allowedUsers: ['manager','admin','customer_care'] },
     { path: 'marketplace', icon: <ShoppingBag size={18} />,   label: 'Marketplace',      section: null,         allowedUsers: ['manager','admin', 'customer_care'] },
     { path: 'queries',     icon: <MessageSquare size={18} />, label: 'Customer service', section: 'Support',    allowedUsers: ['manager','admin', 'customer_care'] },
     { path: 'audits',      icon: <Landmark size={18} />,      label: 'Treasury',         section: 'Accounts',   allowedUsers: ['manager','admin', 'auditor'] },

@@ -388,6 +388,7 @@ const Businesses = ({ canReview }) => {
             <div style={{ marginTop: 14, borderTop: `0.5px solid ${T.border}`, paddingTop: 12 }}>
               <Row label="Phone">{c ? c.phone || '—' : '…'}</Row>
               <Row label="Address">{b.address || '—'}</Row>
+              <Row label="Login email">{details.login ? details.login.email || '—' : '…'}</Row>
               <Row label="Login is">{roleLabel(b.ownerRole) || '—'}</Row>
               <Row label="Login status">
                 {!details.login ? '…'
