@@ -20,4 +20,12 @@
     <loc>https://www.jrinnovationszambia.com/app-store</loc>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://www.jrinnovationszambia.com/yangahomes</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.jrinnovationszambia.com/register</loc>
+    <priority>0.8</priority>
+  </url>
 </urlset>

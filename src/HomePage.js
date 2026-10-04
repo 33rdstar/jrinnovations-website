@@ -209,7 +209,7 @@ const HomePage = () => {
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
             <a
               href="#services"
               onClick={(e) => handleNavClick(e, 'services')}
@@ -233,6 +233,14 @@ const HomePage = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-60" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
               </span>
+            </Link>
+
+            <Link
+              to="/yangahomes"
+              className="inline-flex items-center px-8 py-4 rounded-full font-semibold transition-all duration-500 hover:scale-110 hover:-translate-y-1 hover:shadow-2xl"
+              style={{ background: '#050c2c', color: '#FFA500' }}
+            >
+              <span>Yanga Homes</span>
             </Link>
 
             <a

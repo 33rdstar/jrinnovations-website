@@ -71,6 +71,14 @@ const Navigation = () => {
               <a href="/#contact" className="text-gray-700 hover:text-purple-600 transition-all duration-300 font-medium hover:scale-110">Contact</a>
 
               <Link
+                to="/yangahomes"
+                className="inline-flex items-center px-4 py-2 rounded-full font-semibold text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                style={{ background: '#050c2c', color: '#FFA500' }}
+              >
+                <span>Yanga Homes</span>
+              </Link>
+
+              <Link
                 to="/app-store"
                 className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm text-white overflow-hidden group transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)' }}
@@ -135,32 +143,37 @@ const Navigation = () => {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50" style={{ background: 'rgba(255,255,255,0.97)', boxShadow: '0 -2px 20px rgba(0,0,0,0.1)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '8px 0' }}>
 
-          <a href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: isActive('/') ? '#f3f0ff' : 'transparent' }}>
+          <a href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px', background: isActive('/') ? '#f3f0ff' : 'transparent' }}>
             <Home size={22} style={{ color: isActive('/') ? '#7c3aed' : '#6b7280' }} />
             <span style={{ fontSize: '10px', fontWeight: '600', color: isActive('/') ? '#7c3aed' : '#6b7280' }}>Home</span>
           </a>
 
           <button
             onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: mobileServicesOpen ? '#f3f0ff' : 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px', background: mobileServicesOpen ? '#f3f0ff' : 'transparent', border: 'none', cursor: 'pointer' }}
           >
             <Briefcase size={22} style={{ color: mobileServicesOpen ? '#7c3aed' : '#6b7280' }} />
             <span style={{ fontSize: '10px', fontWeight: '600', color: mobileServicesOpen ? '#7c3aed' : '#6b7280' }}>Services</span>
           </button>
 
-          <a href="/#about" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px' }}>
+          <a href="/#about" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px' }}>
             <Info size={22} style={{ color: '#6b7280' }} />
             <span style={{ fontSize: '10px', fontWeight: '600', color: '#6b7280' }}>About</span>
           </a>
 
-          <a href="/#contact" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px' }}>
+          <a href="/#contact" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px' }}>
             <Mail size={22} style={{ color: '#6b7280' }} />
             <span style={{ fontSize: '10px', fontWeight: '600', color: '#6b7280' }}>Contact</span>
           </a>
 
-          <a href="/app-store" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 12px', borderRadius: '12px', minWidth: '56px', background: isActive('/app-store') ? '#f3f0ff' : 'transparent' }}>
+          <a href="/app-store" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px', background: isActive('/app-store') ? '#f3f0ff' : 'transparent' }}>
             <Store size={22} style={{ color: isActive('/app-store') ? '#7c3aed' : '#6b7280' }} />
             <span style={{ fontSize: '10px', fontWeight: '600', color: isActive('/app-store') ? '#7c3aed' : '#6b7280' }}>App Store</span>
+          </a>
+
+          <a href="/yangahomes" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', textDecoration: 'none', padding: '6px 4px', borderRadius: '12px', minWidth: '56px', background: isActive('/yangahomes') ? '#fff7e6' : 'transparent' }}>
+            <img src="/yangalogo.png" alt="" style={{ width: '22px', height: '22px', borderRadius: '6px' }} />
+            <span style={{ fontSize: '10px', fontWeight: '600', color: isActive('/yangahomes') ? '#b45309' : '#6b7280' }}>Homes</span>
           </a>
 
         </div>
