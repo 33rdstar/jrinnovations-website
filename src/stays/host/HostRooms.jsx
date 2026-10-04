@@ -11,7 +11,13 @@ import { COMMISSION_PERCENT, compressImage, kwacha, todayZm } from '../stayConfi
 const MAX_PHOTOS = 10;
 const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
 
-const emptyForm = { name: '', description: '', pricePerNight: '', capacity: '2', amenities: '', isActive: true, photos: [] };
+// Common house rules a business can tick. Optional: leave all blank if nothing is restricted.
+const RESTRICTION_PRESETS = [
+  'No pets allowed', 'No smoking', 'No parties or events', 'No outside visitors',
+  'No loud music', 'No alcohol', 'No cooking in the room', 'No children under 12',
+];
+
+const emptyForm = { name: '', description: '', pricePerNight: '', capacity: '2', amenities: '', restrictions: [], isActive: true, photos: [] };
 
 const RoomForm = ({ businessId, room, onClose }) => {
   const isNew = !room;
@@ -19,14 +25,25 @@ const RoomForm = ({ businessId, room, onClose }) => {
   const roomRef = useRef(room ? doc(db, 'stayBusinesses', businessId, 'rooms', room.id) : doc(collection(db, 'stayBusinesses', businessId, 'rooms')));
   const [form, setForm] = useState(room ? {
     name: room.name || '', description: room.description || '', pricePerNight: String(room.pricePerNight ?? ''),
-    capacity: String(room.capacity ?? 2), amenities: (room.amenities || []).join(', '),
+    capacity: String(room.capacity ?? 2), amenities: (room.amenities || []).join(', '), restrictions: room.restrictions || [],
     isActive: room.isActive !== false, photos: room.photos || [],
   } : emptyForm);
   const [busy, setBusy] = useState(false);
+  const [customRule, setCustomRule] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const toggleRule = (rule) => setForm((f) => ({
+    ...f, restrictions: f.restrictions.includes(rule) ? f.restrictions.filter((r) => r !== rule) : [...f.restrictions, rule],
+  }));
+  const addCustomRule = () => {
+    const rule = customRule.trim().slice(0, 40);
+    if (!rule || form.restrictions.includes(rule)) { setCustomRule(''); return; }
+    if (form.restrictions.length >= 15) { setError('You can list up to 15 house rules.'); return; }
+    setForm((f) => ({ ...f, restrictions: [...f.restrictions, rule] }));
+    setCustomRule('');
+  };
   const price = Number(form.pricePerNight);
   const validPrice = Number.isFinite(price) && price >= 1 && price <= 100000;
 
@@ -67,7 +84,7 @@ const RoomForm = ({ businessId, room, onClose }) => {
     try {
       const data = {
         name, description: form.description.trim().slice(0, 1000), pricePerNight: price, capacity, amenities,
-        photos: form.photos, isActive: form.isActive, updatedAt: serverTimestamp(),
+        restrictions: form.restrictions, photos: form.photos, isActive: form.isActive, updatedAt: serverTimestamp(),
       };
       if (isNew) await setDoc(roomRef.current, { ...data, createdAt: serverTimestamp() });
       else await updateDoc(roomRef.current, data);
@@ -116,6 +133,32 @@ const RoomForm = ({ businessId, room, onClose }) => {
             <label className="block text-sm font-semibold text-gray-700 mb-1">Amenities</label>
             <input className={field} value={form.amenities} onChange={set('amenities')} placeholder="Wi-Fi, Air conditioning, Parking, Kitchen" />
             <p className="text-xs text-gray-500 mt-1">Separate with commas.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Not allowed <span className="font-normal text-gray-400">(optional)</span></label>
+            <p className="text-xs text-gray-500 mb-2">Guests see these before they book. Tick any that apply, or leave this blank if nothing is restricted.</p>
+            <div className="flex flex-wrap gap-2">
+              {[...RESTRICTION_PRESETS, ...form.restrictions.filter((r) => !RESTRICTION_PRESETS.includes(r))].map((rule) => {
+                const on = form.restrictions.includes(rule);
+                return (
+                  <button
+                    key={rule} type="button" onClick={() => toggleRule(rule)} aria-pressed={on}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition ${on ? 'bg-red-50 border-red-300 text-red-700 font-medium' : 'bg-white border-gray-300 text-gray-600 hover:border-gray-400'}`}
+                  >
+                    {on ? '🚫 ' : ''}{rule}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input
+                className={field} value={customRule} maxLength={40} onChange={(e) => setCustomRule(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomRule(); } }}
+                placeholder="Add your own, e.g. No shoes indoors"
+              />
+              <button type="button" onClick={addCustomRule} className="px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">Add</button>
+            </div>
           </div>
 
           <div>
@@ -226,6 +269,11 @@ const HostRooms = () => {
                   </div>
                   <p className="text-lg font-bold text-amber-700 mt-1">{kwacha(room.pricePerNight)} <span className="text-xs font-normal text-gray-500">/ night</span></p>
                   <p className="text-sm text-gray-500 flex items-center gap-1 mt-1"><Users size={14} /> Up to {room.capacity} guests</p>
+                  {!!room.restrictions?.length && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {room.restrictions.map((r) => <span key={r} className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700">🚫 {r}</span>)}
+                    </div>
+                  )}
                   <div className="mt-auto pt-4 flex items-center gap-2">
                     <button onClick={() => setEditing(room)} className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">
                       <Pencil size={14} /> Edit

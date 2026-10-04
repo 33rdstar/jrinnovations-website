@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { ImagePlus, Star, X } from 'lucide-react';
 import { db, storage } from '../../Config/firebaseConfig';
 import { useHost } from './HostContext';
 import LocationPicker from '../LocationPicker';
 import { compressImage, typeLabel } from '../stayConfig';
+import PayoutRequestCard from './PayoutRequestCard';
 
 const MAX_PHOTOS = 10;
 const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
@@ -15,7 +16,6 @@ const HostProfile = () => {
   const [form, setForm] = useState(null);
   const [location, setLocation] = useState(null);
   const [photos, setPhotos] = useState([]);
-  const [payout, setPayout] = useState('');
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ kind: '', text: '' });
@@ -31,16 +31,6 @@ const HostProfile = () => {
       setPhotos(business.photos || []);
     }
   }, [business, contact, form]);
-
-  useEffect(() => {
-    if (!businessId) return;
-    getDoc(doc(db, 'stayBusinesses', businessId, 'private', 'payout'))
-      .then((s) => {
-        const p = s.data()?.payoutPhone;
-        setPayout(p ? `${p.slice(0, 3)}****${p.slice(-3)}` : '');
-      })
-      .catch(() => {});
-  }, [businessId]);
 
   if (!business || !form) return null;
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -98,7 +88,8 @@ const HostProfile = () => {
   };
 
   return (
-    <form onSubmit={save} className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6">
+    <form onSubmit={save} className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{business.name}</h1>
         <p className="text-sm text-gray-500">{typeLabel(business.type)} · {business.status}</p>
@@ -151,13 +142,6 @@ const HostProfile = () => {
         <LocationPicker value={location} onChange={setLocation} searchHint={[form.area, form.town].map((x) => x.trim()).filter(Boolean).join(', ')} />
       </section>
 
-      <section className="bg-white rounded-xl border border-gray-100 p-5">
-        <h2 className="font-bold text-gray-900">Payouts</h2>
-        <p className="text-sm text-gray-600 mt-2">
-          Guest payments (after Yanga's fee) are sent to <strong>{payout || 'your registered mobile money number'}</strong>.
-          For your security this number can only be changed by Yanga — please contact us if it needs updating.
-        </p>
-      </section>
 
       {message.text && (
         <p className={`text-sm font-medium ${message.kind === 'ok' ? 'text-green-700' : 'text-red-600'}`} role="status">{message.text}</p>
@@ -167,6 +151,8 @@ const HostProfile = () => {
         {busy ? 'Saving…' : 'Save changes'}
       </button>
     </form>
+    <PayoutRequestCard />
+    </div>
   );
 };
 

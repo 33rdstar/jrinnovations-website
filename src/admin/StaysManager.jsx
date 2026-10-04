@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  collection, doc, getDoc, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc,
+  collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where,
 } from 'firebase/firestore';
 import { Check, Copy, ExternalLink, FileText, MapPin } from 'lucide-react';
 import { db } from '../Config/firebaseConfig';
@@ -45,27 +45,63 @@ const Row = ({ label, children }) => (
 );
 
 // ── Approval result (the temporary password is shown exactly once) ───────────
-const CredentialsModal = ({ result, onClose }) => {
-  const [copied, setCopied] = useState(false);
+const fmtWhen = (ms) => (ms ? new Date(ms).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '');
+
+// A message the admin can copy and pass on. After approval it shows the invitation email plus a
+// one-time backup login; for a reissued invitation it shows the fresh email.
+const CredentialsModal = ({ result, onClose, title }) => {
+  const [copied, setCopied] = useState('');
   const loginUrl = `${window.location.origin}/host/login`;
-  const text = `Your Yanga Stays business account is approved.\nSign in: ${loginUrl}\nEmail: ${result.email}\nTemporary password: ${result.tempPassword}\nYou will be asked to choose a new password the first time you sign in.`;
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* user can select manually */ }
+  const isReissue = !!result.purpose;
+  const invitation = result.inviteText || result.text || null;
+  const expires = result.inviteExpiresAt || result.expiresAt || null;
+  const backup = result.tempPassword
+    ? `Your Yanga Homes business account is approved.\nSign in: ${loginUrl}\nEmail: ${result.email}\nTemporary password: ${result.tempPassword}\nYou will be asked to choose a new password the first time you sign in.`
+    : null;
+
+  const copy = async (key, value) => {
+    try { await navigator.clipboard.writeText(value); setCopied(key); setTimeout(() => setCopied(''), 2000); } catch { /* user can select manually */ }
   };
+  const CopyBtn = ({ k, value, label }) => (
+    <button style={btn(T.accent)} onClick={() => copy(k, value)}>
+      {copied === k ? <><Check size={14} style={{ verticalAlign: -2 }} /> Copied</> : <><Copy size={14} style={{ verticalAlign: -2 }} /> {label}</>}
+    </button>
+  );
+  const pre = { background: T.bgRow, border: `0.5px solid ${T.border}`, borderRadius: 10, padding: 14, color: T.textPrimary, fontSize: 12, whiteSpace: 'pre-wrap', userSelect: 'all', margin: '0 0 10px' };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ ...card, maxWidth: 520, width: '100%', background: T.bg }}>
-        <h3 style={{ color: T.green, fontSize: 18, fontWeight: 700, margin: 0 }}>Business approved</h3>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
+      <div style={{ ...card, maxWidth: 560, width: '100%', background: T.bg }}>
+        <h3 style={{ color: T.green, fontSize: 18, fontWeight: 700, margin: 0 }}>{title || (isReissue ? 'Fresh invitation' : 'Business approved')}</h3>
         <p style={{ color: T.textSecondary, fontSize: 13, margin: '8px 0 14px' }}>
           {result.emailSent
-            ? <>An email with a link to set a password has been sent to <strong style={{ color: T.textPrimary }}>{result.email}</strong> (valid for 3 days; ask them to check spam). The details below are a <strong style={{ color: T.accent }}>backup</strong> — only use them if the email does not arrive. They are shown only once.</>
-            : <><strong style={{ color: T.red }}>The email could not be sent{result.emailError ? ` (${result.emailError})` : ''}.</strong> Send these login details to the owner yourself. <strong style={{ color: T.accent }}>The password is shown only once</strong> and is not stored.</>}
+            ? <>An email with a link to {result.purpose === 'reset' ? 'choose a new' : 'set a'} password has been sent to <strong style={{ color: T.textPrimary }}>{result.email}</strong>. Ask them to check their spam folder too.</>
+            : <><strong style={{ color: T.red }}>The email could not be sent{result.emailError ? ` (${result.emailError})` : ''}.</strong> Copy the message below and send it to the owner yourself.</>}
         </p>
-        <pre style={{ background: T.bgRow, border: `0.5px solid ${T.border}`, borderRadius: 10, padding: 14, color: T.textPrimary, fontSize: 13, whiteSpace: 'pre-wrap', userSelect: 'all' }}>{text}</pre>
-        <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-          <button style={btn(T.accent)} onClick={copy}>{copied ? <><Check size={14} style={{ verticalAlign: -2 }} /> Copied</> : <><Copy size={14} style={{ verticalAlign: -2 }} /> Copy details</>}</button>
-          <a style={{ ...ghost, textDecoration: 'none', display: 'inline-block' }} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer">Send via WhatsApp</a>
-          <a style={{ ...ghost, textDecoration: 'none', display: 'inline-block' }} href={`mailto:${result.email}?subject=${encodeURIComponent('Your Yanga Stays account')}&body=${encodeURIComponent(text)}`}>Send by email</a>
+
+        {invitation && (
+          <>
+            <p style={{ color: T.textSecondary, fontSize: 12, margin: '0 0 6px' }}>
+              Copy of the invitation email{expires ? <> — the link works <strong style={{ color: T.accent }}>once</strong>, until {fmtWhen(expires)}</> : ''}.
+              A new copy replaces this link; you can get one any time from <em>Businesses → Invitation</em>.
+            </p>
+            <pre style={{ ...pre, maxHeight: 190, overflowY: 'auto' }}>{invitation}</pre>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+              <CopyBtn k="invite" value={invitation} label="Copy invitation" />
+              <a style={{ ...ghost, textDecoration: 'none', display: 'inline-block' }} href={`https://wa.me/?text=${encodeURIComponent(invitation)}`} target="_blank" rel="noreferrer">Send via WhatsApp</a>
+            </div>
+          </>
+        )}
+
+        {backup && (
+          <>
+            <p style={{ color: T.textSecondary, fontSize: 12, margin: '0 0 6px' }}>Backup login — <strong style={{ color: T.accent }}>shown only once</strong> and not stored. Only use it if the invitation link cannot be used.</p>
+            <pre style={pre}>{backup}</pre>
+            <CopyBtn k="backup" value={backup} label="Copy backup login" />
+          </>
+        )}
+
+        <div style={{ display: 'flex', marginTop: 14 }}>
           <button style={{ ...ghost, marginLeft: 'auto' }} onClick={onClose}>Done</button>
         </div>
       </div>
@@ -275,25 +311,47 @@ const PayoutForm = ({ business, current, onClose, onDone }) => {
   );
 };
 
+const EMAIL_KIND = { invite: 'Invitation', reset: 'Password reset', rejection: 'Rejection', notice: 'Notice' };
+
 // ── Businesses ───────────────────────────────────────────────────────────────
 const Businesses = ({ canReview }) => {
   const { rows, loading, error } = useLive('stayBusinesses', 200);
   const [open, setOpen] = useState(null);
-  const [details, setDetails] = useState({ payout: '', contact: null });
+  const [details, setDetails] = useState({ payout: '', contact: null, login: null, emails: [] });
   const [msg, setMsg] = useState('');
   const [notice, setNotice] = useState('');
   const [modal, setModal] = useState(null);       // { kind: 'handover' | 'payout', business }
   const [handOverResult, setHandOverResult] = useState(null);
+  const [reissuing, setReissuing] = useState('');
+  const [reissueResult, setReissueResult] = useState(null);
 
   const loadDetails = async (b) => {
-    setDetails({ payout: '…', contact: null });
+    setDetails({ payout: '…', contact: null, login: null, emails: [] });
     try {
-      const [p, c] = await Promise.all([
+      const [p, c, u, e] = await Promise.all([
         getDoc(doc(db, 'stayBusinesses', b.id, 'private', 'payout')),
         getDoc(doc(db, 'stayBusinesses', b.id, 'contact', 'details')),
+        b.ownerUid ? getDoc(doc(db, 'users', b.ownerUid)) : Promise.resolve(null),
+        getDocs(query(collection(db, 'stayEmailLog'), where('businessId', '==', b.id), limit(30))),
       ]);
-      setDetails({ payout: p.data()?.payoutPhone || 'Not set', contact: c.data() || {} });
-    } catch { setDetails({ payout: 'Could not load', contact: {} }); }
+      setDetails({
+        payout: p.data()?.payoutPhone || 'Not set',
+        contact: c.data() || {},
+        login: u ? u.data() || null : null,
+        emails: e.docs.map((d) => d.data()).sort((x, y) => tsMillis(y.createdAt) - tsMillis(x.createdAt)).slice(0, 8),
+      });
+    } catch { setDetails({ payout: 'Could not load', contact: {}, login: null, emails: [] }); }
+  };
+
+  // Make a fresh set-password link, email it, and show the admin a copy of the message.
+  const reissue = async (b) => {
+    if (!window.confirm(`Send ${b.name} a fresh invitation? Any earlier link will stop working.`)) return;
+    setReissuing(b.id); setMsg('');
+    try {
+      const res = await callStay('reissueStayInvite')({ businessId: b.id, siteOrigin: window.location.origin });
+      setReissueResult(res.data);
+      loadDetails(b);
+    } catch (err) { setMsg(friendlyError(err)); } finally { setReissuing(''); }
   };
 
   const toggleOpen = async (b) => {
@@ -331,6 +389,29 @@ const Businesses = ({ canReview }) => {
               <Row label="Phone">{c ? c.phone || '—' : '…'}</Row>
               <Row label="Address">{b.address || '—'}</Row>
               <Row label="Login is">{roleLabel(b.ownerRole) || '—'}</Row>
+              <Row label="Login status">
+                {!details.login ? '…'
+                  : details.login.isActive === false ? 'Switched off'
+                  : details.login.resetPassword === true ? <span style={{ color: T.accent }}>Waiting for the owner to set a password</span>
+                  : <span style={{ color: T.green }}>Password set — can sign in</span>}
+              </Row>
+              <Row label="Emails sent">
+                {details.emails.length === 0 ? 'None recorded' : (
+                  <div>
+                    {details.emails.map((m, i) => {
+                      const exp = tsMillis(m.expiresAt);
+                      return (
+                        <div key={i} style={{ marginBottom: 4 }}>
+                          <span style={{ color: m.status === 'sent' ? T.green : T.red }}>{m.status === 'sent' ? '✓' : '✗'}</span>{' '}
+                          {EMAIL_KIND[m.kind] || m.kind} → {m.to} · {prettyTime(m.createdAt)}
+                          {exp ? (Date.now() < exp ? ` · link valid until ${fmtWhen(exp)}` : ' · link expired') : ''}
+                          {m.status === 'failed' && m.error ? ` (${m.error})` : ''}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </Row>
               <Row label="Payout number">{details.payout}</Row>
               <Row label="Approved">{prettyTime(b.approvedAt)}</Row>
               <Row label="Terms">v{b.termsVersion}</Row>
@@ -340,6 +421,11 @@ const Businesses = ({ canReview }) => {
                   {b.status === 'approved'
                     ? <button style={btn(T.redSub, T.red)} onClick={() => setStatus(b, 'suspended')}>Suspend business</button>
                     : b.status === 'suspended' && <button style={btn(T.green)} onClick={() => setStatus(b, 'approved')}>Reactivate</button>}
+                  {b.ownerUid && details.login?.isActive !== false && (
+                    <button style={{ ...ghost, opacity: reissuing === b.id ? 0.6 : 1 }} disabled={reissuing === b.id} onClick={() => reissue(b)}>
+                      {reissuing === b.id ? 'Working…' : 'Invitation: resend & show a copy'}
+                    </button>
+                  )}
                   <button style={ghost} onClick={() => setModal({ kind: 'payout', business: b })}>Change payout number</button>
                   <button style={ghost} onClick={() => setModal({ kind: 'handover', business: b })}>Hand over to a new owner / manager</button>
                 </div>
@@ -356,7 +442,8 @@ const Businesses = ({ canReview }) => {
         <PayoutForm business={modal.business} current={details.payout} onClose={() => setModal(null)}
           onDone={(res) => { setModal(null); setNotice(res.emailSent ? 'Payout number changed. The business was emailed.' : 'Payout number changed. (The business could not be emailed, so please tell them.)'); loadDetails(modal.business); }} />
       )}
-      {handOverResult && <CredentialsModal result={handOverResult} onClose={() => setHandOverResult(null)} />}
+      {handOverResult && <CredentialsModal result={handOverResult} title="Hand-over complete" onClose={() => setHandOverResult(null)} />}
+      {reissueResult && <CredentialsModal result={reissueResult} onClose={() => setReissueResult(null)} />}
     </div>
   );
 };
@@ -545,11 +632,88 @@ const Bookings = () => {
   );
 };
 
+// ── Payout number requests ───────────────────────────────────────────────────
+const REQ_STATUS = {
+  pending: chip(T.accent, T.accentSub), approved: chip(T.green, T.greenSub),
+  declined: chip(T.red, T.redSub), cancelled: chip(T.textSecondary, 'rgba(255,255,255,0.06)'),
+};
+
+const PayoutRequests = ({ requests, loading, error, canReview }) => {
+  const [busyId, setBusyId] = useState('');
+  const [msg, setMsg] = useState('');
+  const [notes, setNotes] = useState({});
+  const [verified, setVerified] = useState({});
+
+  const decide = async (r, decision) => {
+    const note = (notes[r.id] || '').trim();
+    if (decision === 'decline' && note.length < 3) return setMsg('Give a short reason for declining. It is emailed to the business.');
+    if (decision === 'approve' && !verified[r.id]) return setMsg('Tick the box to confirm you verified the owner first.');
+    if (!window.confirm(decision === 'approve'
+      ? (r.kind === 'email' ? `Approve? ${r.businessName} will sign in with ${r.newEmail}, and anyone signed in is signed out.` : `Approve? Future payouts for ${r.businessName} go to ${r.newPhone}.`)
+      : 'Decline this request?')) return;
+    setBusyId(r.id); setMsg('');
+    try {
+      await callStay('reviewPayoutRequest')({ requestId: r.id, decision, note, verified: !!verified[r.id] });
+    } catch (err) { setMsg(friendlyError(err)); }
+    setBusyId('');
+  };
+
+  if (loading) return <p style={{ color: T.textSecondary }}>Loading…</p>;
+  return (
+    <div>
+      {error && <p style={{ color: T.red }}>{error}</p>}
+      {msg && <p style={{ color: T.red }}>{msg}</p>}
+      {requests.length === 0 ? (
+        <div style={{ ...card, color: T.textSecondary, textAlign: 'center' }}>No change requests.</div>
+      ) : requests.map((r) => (
+        <div key={r.id} style={{ ...card, marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ color: T.textPrimary, fontWeight: 700 }}>{r.businessName}</div>
+            <span style={REQ_STATUS[r.status] || REQ_STATUS.cancelled}>{r.status}</span>
+          </div>
+          <Row label="Requested by">{r.requestedByName || '—'} ({roleLabel(r.requestedByRole)}) · {r.requestedByEmail}</Row>
+          {r.kind === 'email' ? (
+            <>
+              <Row label="Changing">Login email</Row>
+              <Row label="Current email">{r.requestedByEmail}</Row>
+              <Row label="New email"><strong>{r.newEmail}</strong></Row>
+            </>
+          ) : (
+            <>
+              <Row label="Changing">Payout number</Row>
+              <Row label="Current number">{r.currentMasked || 'not set'}</Row>
+              <Row label="New number"><strong>{r.newPhone}</strong></Row>
+            </>
+          )}
+          <Row label="Reason">{r.reason}</Row>
+          <Row label="Sent">{prettyTime(r.createdAt)}</Row>
+          {r.reviewNote && <Row label="Staff note">{r.reviewNote}</Row>}
+          {r.status === 'pending' && canReview && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ color: T.accent, fontSize: 12, margin: '0 0 8px' }}>Phone the owner on the number already on file (not a new contact given in the request) and confirm the request is genuine.</p>
+              <label style={{ ...lbl, display: 'flex', gap: 8, alignItems: 'center', margin: '0 0 8px' }}>
+                <input type="checkbox" checked={!!verified[r.id]} onChange={(e) => setVerified((v) => ({ ...v, [r.id]: e.target.checked }))} />
+                I verified this with the owner
+              </label>
+              <input style={fieldStyle} value={notes[r.id] || ''} onChange={(e) => setNotes((n) => ({ ...n, [r.id]: e.target.value }))} placeholder="Note (required if declining; emailed to the business)" />
+              <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <button disabled={busyId === r.id} style={{ ...btn(T.green), opacity: busyId === r.id ? 0.6 : 1 }} onClick={() => decide(r, 'approve')}>Approve</button>
+                <button disabled={busyId === r.id} style={{ ...btn(T.red, '#fff'), opacity: busyId === r.id ? 0.6 : 1 }} onClick={() => decide(r, 'decline')}>Decline</button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'applications', label: 'Applications' },
   { key: 'businesses',   label: 'Businesses' },
   { key: 'bookings',     label: 'Bookings & payouts' },
+  { key: 'payouts',      label: 'Change requests' },
   { key: 'reports',      label: 'Reports' },
 ];
 
@@ -558,6 +722,8 @@ const StaysManager = () => {
   const [tab, setTab] = useState('applications');
   const canReview = ['admin', 'manager'].includes(userRole);
   const reportsLive = useLive('stayReports', 200);
+  const payoutLive = useLive('stayPayoutRequests', 100);
+  const waitingPayouts = payoutLive.rows.filter((r) => r.status === 'pending').length;
   const openReports = reportsLive.rows.filter((r) => r.status === 'open').length;
 
   return (
@@ -572,6 +738,9 @@ const StaysManager = () => {
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '10px 16px', fontSize: 14, color: tab === t.key ? T.accent : T.textSecondary, borderBottom: `2px solid ${tab === t.key ? T.accent : 'transparent'}`, marginBottom: -1 }}>
             {t.label}
+            {t.key === 'payouts' && waitingPayouts > 0 && (
+              <span style={{ marginLeft: 8, background: T.red, color: '#fff', borderRadius: 99, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>{waitingPayouts}</span>
+            )}
             {t.key === 'reports' && openReports > 0 && (
               <span style={{ marginLeft: 8, background: T.red, color: '#fff', borderRadius: 99, padding: '1px 8px', fontSize: 11, fontWeight: 700 }}>{openReports}</span>
             )}
@@ -581,6 +750,7 @@ const StaysManager = () => {
       {tab === 'applications' && <Applications canReview={canReview} />}
       {tab === 'businesses' && <Businesses canReview={canReview} />}
       {tab === 'bookings' && <Bookings />}
+      {tab === 'payouts' && <PayoutRequests requests={payoutLive.rows} loading={payoutLive.loading} error={payoutLive.error} canReview={canReview} />}
       {tab === 'reports' && <Reports reports={reportsLive.rows} loading={reportsLive.loading} error={reportsLive.error} canReview={canReview} />}
     </div>
   );
