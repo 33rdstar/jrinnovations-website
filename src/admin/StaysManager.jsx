@@ -6,6 +6,7 @@ import { Check, Copy, ExternalLink, FileText, MapPin } from 'lucide-react';
 import { db } from '../Config/firebaseConfig';
 import { useAuth } from '../Auth/AuthContext';
 import { T } from './UsersManager';
+import ExtractButton from '../stays/host/ExtractButton';
 import {
   STAY_ROLES, callStay, friendlyError, kwacha, mapsLink, prettyDay, prettyTime, roleLabel, tsMillis, typeLabel,
 } from '../stays/stayConfig';
@@ -170,7 +171,10 @@ const Applications = ({ canReview }) => {
               <div style={{ color: T.textPrimary, fontWeight: 700, fontSize: 15 }}>{a.businessName}</div>
               <div style={{ color: T.textSecondary, fontSize: 12, marginTop: 2 }}>{typeLabel(a.type)} · {[a.area, a.town].filter(Boolean).join(", ")} · {a.ownerName}{a.stayRole ? ` (${roleLabel(a.stayRole)})` : ""} · {prettyTime(a.createdAt)}</div>
             </div>
-            <span style={APP_STATUS[a.status] || APP_STATUS.pending}>{a.status}</span>
+            <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              {a.wantsTraining && <span style={chip(T.accent, T.accentSub)}>wants training</span>}
+              <span style={APP_STATUS[a.status] || APP_STATUS.pending}>{a.status}</span>
+            </span>
           </div>
 
           {open === a.id && (
@@ -529,11 +533,11 @@ const needsAttention = (b) =>
   ['needs_refund', 'needs_review'].includes(b.status) || ['failed', 'skipped', 'needs_review'].includes(b.payoutStatus);
 
 const BOOKING_FILTERS = [
-  { key: 'attention', label: 'Needs attention' },
+  { key: 'all',       label: 'All' },
   { key: 'paid',      label: 'Paid' },
   { key: 'cancelled', label: 'Cancelled' },
   { key: 'unpaid',    label: 'Awaiting payment' },
-  { key: 'all',       label: 'All' },
+  { key: 'attention', label: 'Needs attention' },
 ];
 
 const statusChip = (b) => {
@@ -543,9 +547,68 @@ const statusChip = (b) => {
   return chip(T.textSecondary, 'rgba(255,255,255,0.06)');
 };
 
+// The full record of one booking, with the payout to the business loaded from its own record.
+const BookingDetails = ({ b }) => {
+  const [payout, setPayout] = useState(undefined);   // undefined = loading, null = none
+  useEffect(() => {
+    let alive = true;
+    getDoc(doc(db, 'stayPayouts', b.id))
+      .then((snap) => { if (alive) setPayout(snap.exists() ? snap.data() : null); })
+      .catch(() => { if (alive) setPayout(null); });
+    return () => { alive = false; };
+  }, [b.id]);
+
+  const mono = { fontFamily: 'ui-monospace, Menlo, Consolas, monospace', fontSize: 12 };
+  return (
+    <div style={{ marginTop: 12, borderTop: `0.5px solid ${T.border}`, paddingTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '0 28px' }}>
+      <div>
+        <Row label="Guest">{b.guestName}</Row>
+        <Row label="Guest contact">{b.guestPhone || '—'}</Row>
+        <Row label="Paid from">{b.payPhoneMasked || '—'}</Row>
+        <Row label="Business">{b.businessName}</Row>
+        <Row label="Room">{b.roomName}</Row>
+        <Row label="Check-in">{prettyDay(b.checkIn)}</Row>
+        <Row label="Check-out">{prettyDay(b.checkOut)}</Row>
+        <Row label="Nights">{b.nights} × {kwacha(b.pricePerNight)}</Row>
+        <Row label="Booked">{prettyTime(b.createdAt)}</Row>
+        {b.paidAt && <Row label="Paid">{prettyTime(b.paidAt)}</Row>}
+        {b.status === 'held' && b.holdExpiresAt && <Row label="Hold ends">{prettyTime(b.holdExpiresAt)}</Row>}
+      </div>
+      <div>
+        <Row label="Guest paid"><strong>{kwacha(b.total)}</strong></Row>
+        <Row label={`Yanga ${b.commissionPercent || 12}%`}><span style={{ color: T.green }}>{kwacha(b.commission)}</span></Row>
+        <Row label="Business gets">{kwacha(b.businessAmount)}</Row>
+        <Row label="Status"><span style={statusChip(b)}>{String(b.status).replace('_', ' ')}</span></Row>
+        <Row label="Payout">
+          {payout === undefined ? '…' : !payout ? <span style={{ color: T.textSecondary }}>{b.payoutStatus && b.payoutStatus !== 'none' ? String(b.payoutStatus).replace('_', ' ') : 'No payout (not paid yet)'}</span> : (
+            <span>
+              <span style={chip(payout.status === 'paid' ? T.green : ['failed', 'skipped', 'needs_review'].includes(payout.status) ? T.red : T.accent, payout.status === 'paid' ? T.greenSub : ['failed', 'skipped', 'needs_review'].includes(payout.status) ? T.redSub : T.accentSub)}>{String(payout.status).replace('_', ' ')}</span>
+              {payout.attempts ? <span style={{ color: T.textSecondary }}> · {payout.attempts} attempt{payout.attempts > 1 ? 's' : ''}</span> : null}
+              {payout.reason ? <span style={{ color: T.textSecondary }}> · {String(payout.reason).replace(/_/g, ' ')}</span> : null}
+            </span>
+          )}
+        </Row>
+        {payout?.paidAt && <Row label="Payout sent">{prettyTime(payout.paidAt)}</Row>}
+        <Row label="Payment ref"><span style={mono}>{b.paymentReference || '—'}</span></Row>
+        {payout?.lencoReference && <Row label="Payout ref"><span style={mono}>{payout.lencoReference}</span></Row>}
+        <Row label="Invoice">{b.invoiceNumber || '—'}</Row>
+        <Row label="Booking ID"><span style={mono}>{b.id}</span></Row>
+        {b.status === 'cancelled' && (
+          <>
+            <Row label="Cancelled">{b.cancelledAt ? prettyTime(b.cancelledAt) : '—'}</Row>
+            <Row label="Reason">{b.cancelReason || 'None given'}</Row>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Bookings = () => {
   const { rows, loading, error } = useLive('stayBookings', 200);
-  const [filter, setFilter] = useState('attention');
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [openId, setOpenId] = useState(null);
   const [msg, setMsg] = useState('');
 
   const stats = useMemo(() => {
@@ -558,7 +621,9 @@ const Bookings = () => {
     };
   }, [rows]);
 
+  const term = search.trim().toLowerCase();
   const shown = rows.filter((b) => {
+    if (term && ![b.guestName, b.guestPhone, b.businessName, b.roomName, b.invoiceNumber, b.paymentReference, b.id].some((v) => String(v || '').toLowerCase().includes(term))) return false;
     if (filter === 'all') return true;
     if (filter === 'attention') return needsAttention(b);
     if (filter === 'paid') return b.status === 'paid';
@@ -592,7 +657,25 @@ const Bookings = () => {
       </div>
       <p style={{ color: T.textSecondary, fontSize: 11, margin: '-6px 0 14px' }}>Totals cover the 200 most recent bookings.</p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+        <ExtractButton dark filename="yanga-stays-bookings" title="Stays bookings and payouts" disabled={!shown.length} getSheets={() => [{
+          name: 'Bookings', title: 'Bookings and payouts',
+          columns: [
+            { header: 'Business', key: 'biz', width: 140 }, { header: 'Room', key: 'room', width: 110 }, { header: 'Guest', key: 'guest', width: 120 }, { header: 'Guest phone', key: 'phone', width: 95 },
+            { header: 'Check in', key: 'in' }, { header: 'Check out', key: 'out' }, { header: 'Nights', key: 'n', type: 'number', width: 50 },
+            { header: 'Guest paid (K)', key: 'total', type: 'money' }, { header: 'Yanga 12% (K)', key: 'fee', type: 'money' }, { header: 'Business (K)', key: 'net', type: 'money' },
+            { header: 'Status', key: 'status' }, { header: 'Payout', key: 'payout' }, { header: 'Invoice', key: 'inv', width: 110 }, { header: 'Booked', key: 'when', width: 120 },
+          ],
+          rows: shown.map((b) => ({
+            biz: b.businessName, room: b.roomName, guest: b.guestName, phone: b.guestPhone, in: b.checkIn, out: b.checkOut, n: b.nights,
+            total: b.total, fee: b.commission, net: b.businessAmount, status: String(b.status || '').replace('_', ' '),
+            payout: String(b.payoutStatus || '').replace('_', ' '), inv: b.invoiceNumber || '', when: prettyTime(b.createdAt),
+          })),
+        }]} />
+        <input
+          value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search guest, business, invoice, reference…"
+          style={{ background: T.bgRow, color: T.textPrimary, border: `0.5px solid ${T.border}`, borderRadius: 8, padding: '7px 12px', fontSize: 13, minWidth: 260 }}
+        />
         {BOOKING_FILTERS.map((f) => (
           <button key={f.key} onClick={() => setFilter(f.key)} style={{ ...btn(filter === f.key ? T.accent : 'transparent', filter === f.key ? '#0D1B2A' : T.textSecondary), border: filter === f.key ? 'none' : `0.5px solid ${T.border}` }}>{f.label}</button>
         ))}
@@ -603,8 +686,8 @@ const Bookings = () => {
       {loading ? <p style={{ color: T.textSecondary }}>Loading…</p> : shown.length === 0 ? (
         <div style={{ ...card, color: T.textSecondary, textAlign: 'center' }}>{filter === 'attention' ? 'Nothing needs attention. 🎉' : 'No bookings here.'}</div>
       ) : shown.map((b) => (
-        <div key={b.id} style={{ ...card, marginBottom: 10 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div key={b.id} style={{ ...card, marginBottom: 10, borderColor: openId === b.id ? T.accent : undefined }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', cursor: 'pointer' }} onClick={() => setOpenId(openId === b.id ? null : b.id)}>
             <div>
               <div style={{ color: T.textPrimary, fontWeight: 700 }}>{b.businessName} · {b.roomName}</div>
               <div style={{ color: T.textSecondary, fontSize: 12, marginTop: 2 }}>
@@ -622,8 +705,12 @@ const Bookings = () => {
               <span style={chip(['failed', 'skipped', 'needs_review'].includes(b.payoutStatus) ? T.red : T.textSecondary, ['failed', 'skipped', 'needs_review'].includes(b.payoutStatus) ? T.redSub : 'rgba(255,255,255,0.06)')}>payout: {b.payoutStatus.replace('_', ' ')}</span>
             )}
             <span style={{ color: T.textSecondary, fontSize: 11 }}>{b.invoiceNumber ? `${b.invoiceNumber} · ` : ''}{prettyTime(b.createdAt)}</span>
-            {b.invoiceNumber && <button style={{ ...ghost, marginLeft: 'auto', padding: '4px 10px', fontSize: 12 }} onClick={() => openInvoice(b)}><FileText size={13} style={{ verticalAlign: -2 }} /> Invoice</button>}
+            <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+              {b.invoiceNumber && <button style={{ ...ghost, padding: '4px 10px', fontSize: 12 }} onClick={() => openInvoice(b)}><FileText size={13} style={{ verticalAlign: -2 }} /> Invoice</button>}
+              <button style={{ ...ghost, padding: '4px 10px', fontSize: 12 }} onClick={() => setOpenId(openId === b.id ? null : b.id)}>{openId === b.id ? 'Hide details' : 'Details'}</button>
+            </span>
           </div>
+          {openId === b.id && <BookingDetails b={b} />}
           {b.status === 'needs_refund' && <p style={{ color: T.accent, fontSize: 12, margin: '10px 0 0' }}>Payment arrived after the room was taken. Refund the guest via Lenco (reference {b.paymentReference}); the business was not paid.</p>}
           {b.status === 'needs_review' && <p style={{ color: T.accent, fontSize: 12, margin: '10px 0 0' }}>Amount collected did not match the booking ({b.reviewReason}). Check Lenco (reference {b.paymentReference}); the business was not paid.</p>}
           {['failed', 'skipped', 'needs_review'].includes(b.payoutStatus) && <p style={{ color: T.red, fontSize: 12, margin: '10px 0 0' }}>The payout to the business has not completed. Check the business payout number and the Lenco balance; failed transfers retry automatically up to 5 times.</p>}

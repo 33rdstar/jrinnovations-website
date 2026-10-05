@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection, deleteDoc, doc, documentId, onSnapshot, query, serverTimestamp, setDoc, where,
 } from 'firebase/firestore';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react';
 import { db } from '../../Config/firebaseConfig';
 import { useHost } from './HostContext';
-import { addDays, prettyDay, todayZm } from '../stayConfig';
+import { addDays, kwacha, prettyDay, todayZm } from '../stayConfig';
+import useNow from './useNow';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -38,12 +39,14 @@ const STATE_STYLE = {
 
 const HostCalendar = () => {
   const { businessId, business, rooms, bookings } = useHost();
+  const tick = useNow(30000);                // re-checks expired holds and the date as time passes
   const today = todayZm();
   const [roomId, setRoomId] = useState('');
   const [month, setMonth] = useState(today.slice(0, 7));
   const [nights, setNights] = useState({});
   const [selected, setSelected] = useState(null); // a booked day, to show who is staying
   const [error, setError] = useState('');
+  const [done, setDone] = useState('');
 
   // Default to the first room once rooms load.
   useEffect(() => {
@@ -71,17 +74,18 @@ const HostCalendar = () => {
     if (day < today) return 'past';
     const n = nights[day];
     if (!n) return 'free';
-    if (n.status === 'held' && (n.holdExpiresAt?.toMillis?.() ?? 0) < Date.now()) return 'free'; // lapsed hold
+    if (n.status === 'held' && (n.holdExpiresAt?.toMillis?.() ?? 0) < tick) return 'free'; // lapsed hold
     return n.status;
   };
 
   const onDayClick = async (day) => {
-    setError(''); setSelected(null);
+    setError(''); setDone(''); setSelected(null);
     const state = stateOf(day);
+    const roomName = rooms.find((r) => r.id === roomId)?.name || 'this room';
     const ref = doc(db, 'stayBusinesses', businessId, 'rooms', roomId, 'nights', day);
     try {
-      if (state === 'free') await setDoc(ref, { status: 'blocked', updatedAt: serverTimestamp() });
-      else if (state === 'blocked') await deleteDoc(ref);
+      if (state === 'free') { await setDoc(ref, { status: 'blocked', updatedAt: serverTimestamp() }); setDone(`${prettyDay(day)} is now blocked for ${roomName}.`); }
+      else if (state === 'blocked') { await deleteDoc(ref); setDone(`${prettyDay(day)} is open again for ${roomName}.`); }
       else if (state === 'paid') setSelected(day);
       else if (state === 'held') setError('A guest is paying for this night right now. It will confirm or free up within 15 minutes.');
     } catch (err) {
@@ -93,22 +97,41 @@ const HostCalendar = () => {
   if (business && business.status !== 'approved') return <p className="text-gray-500">The calendar is available once your business is approved.</p>;
   if (!rooms.length) return <p className="text-gray-500">Add a room first, then you can manage its dates here.</p>;
 
+  const room = rooms.find((r) => r.id === roomId) || rooms[0];
+  const cover = room?.photos?.[0];
   const booking = selected ? bookingById[nights[selected]?.bookingId] : null;
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Calendar</h1>
-        <select value={roomId} onChange={(e) => { setRoomId(e.target.value); setSelected(null); }}
-          className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-          {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-        </select>
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          Room
+          <select value={roomId} onChange={(e) => { setRoomId(e.target.value); setSelected(null); setDone(''); setError(''); }}
+            className="px-3 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </label>
       </div>
+
+      {/* So there is never any doubt which room the dates below belong to */}
+      {room && (
+        <div className="flex items-center gap-4 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 mb-4" aria-live="polite">
+          {cover
+            ? <img src={cover} alt={room.name} className="w-24 h-20 sm:w-32 sm:h-24 rounded-lg object-cover flex-shrink-0" />
+            : <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-lg bg-white border border-amber-200 flex flex-col items-center justify-center text-amber-700 text-xs flex-shrink-0"><ImageOff size={20} />No photo</div>}
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-700">You are changing the dates for</p>
+            <p className="text-xl sm:text-2xl font-extrabold text-gray-900 truncate">{room.name}</p>
+            <p className="text-sm text-gray-600">{kwacha(room.pricePerNight)} per night · sleeps {room.capacity}{room.isActive === false ? ' · switched off' : ''}</p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5">
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => setMonth(shiftMonth(month, -1))} aria-label="Previous month" className="p-2 rounded-lg hover:bg-gray-100"><ChevronLeft size={20} /></button>
-          <h2 className="font-bold text-gray-900">{monthTitle(month)}</h2>
+          <h2 className="font-bold text-gray-900 text-center">{monthTitle(month)}<span className="block text-xs font-medium text-amber-700">{room?.name}</span></h2>
           <button onClick={() => setMonth(shiftMonth(month, 1))} aria-label="Next month" className="p-2 rounded-lg hover:bg-gray-100"><ChevronRight size={20} /></button>
         </div>
 
@@ -137,6 +160,7 @@ const HostCalendar = () => {
           ))}
         </div>
         <p className="text-xs text-gray-500 mt-3">Tap a free night to block it (maintenance, a walk-in guest, a private booking). Tap a blocked night to open it again.</p>
+        {done && <p className="text-sm text-green-700 font-medium mt-3" role="status">{done}</p>}
         {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
       </div>
 

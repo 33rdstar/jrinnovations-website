@@ -130,7 +130,7 @@ const HostProfile = () => {
           <input className={field} value={form.amenities} onChange={set('amenities')} placeholder="Restaurant, Swimming pool, Free parking" />
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
-          <div><label className="block text-sm font-semibold text-gray-700 mb-1">Phone</label><input className={field} value={form.phone} onChange={set('phone')} /></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-1">Business contact phone</label><input className={field} value={form.phone} onChange={set('phone')} /><p className="text-xs text-gray-500 mt-1">Guests see this number after they pay. It is not where your money goes.</p></div>
           <div><label className="block text-sm font-semibold text-gray-700 mb-1">Town</label><input className={field} value={form.town} onChange={set('town')} /></div>
         </div>
         <div><label className="block text-sm font-semibold text-gray-700 mb-1">Area / neighbourhood</label><input className={field} value={form.area} onChange={set('area')} placeholder="e.g. Chelstone" /><p className="text-xs text-gray-500 mt-1">Guests can filter places by area in the app.</p></div>

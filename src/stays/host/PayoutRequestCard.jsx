@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../Config/firebaseConfig';
 import { useHost } from './HostContext';
+import { Mail, Wallet } from 'lucide-react';
 import { callStay, friendlyError, prettyTime } from '../stayConfig';
 
 const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
@@ -87,10 +88,21 @@ const PayoutRequestCard = () => {
   };
 
   return (
-    <section className="bg-white rounded-xl border border-gray-100 p-5">
-      <h2 className="font-bold text-gray-900">Payouts</h2>
-      <p className="text-sm text-gray-600 mt-2">
-        Guest payments (after Yanga's fee) are sent to <strong>{current || 'your registered mobile money number'}</strong>.
+    <div className="space-y-6">
+    <section className="rounded-xl border-2 border-emerald-300 bg-emerald-50/60 p-5">
+      <div className="flex items-center gap-3">
+        <span className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0"><Wallet size={20} /></span>
+        <div>
+          <h2 className="font-bold text-emerald-900 leading-tight">Payout mobile money number</h2>
+          <p className="text-xs text-emerald-800">Where your money is sent</p>
+        </div>
+      </div>
+      <div className="mt-4 rounded-lg bg-white border border-emerald-200 px-4 py-3">
+        <p className="text-xs uppercase tracking-wide font-semibold text-gray-500">Current payout number</p>
+        <p className="text-xl font-bold text-gray-900 tracking-wide">{current || 'Your registered number'}</p>
+      </div>
+      <p className="text-sm text-gray-700 mt-3">
+        Guest payments (after Yanga's fee) are sent to this number. It is separate from your business contact phone.
         To protect your money, a change has to be approved by Yanga after we confirm it is you.
       </p>
 
@@ -124,8 +136,17 @@ const PayoutRequestCard = () => {
         </div>
       )}
 
-      <div className="mt-6 pt-5 border-t border-gray-100">
-        <h2 className="font-bold text-gray-900">Login email</h2>
+    </section>
+
+    <section className="rounded-xl border-2 border-sky-300 bg-sky-50/60 p-5">
+      <div>
+        <div className="flex items-center gap-3">
+          <span className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center flex-shrink-0"><Mail size={20} /></span>
+          <div>
+            <h2 className="font-bold text-sky-900 leading-tight">Login email</h2>
+            <p className="text-xs text-sky-800">What you sign in with</p>
+          </div>
+        </div>
         <p className="text-sm text-gray-600 mt-2">
           This is the email you sign in with and where we send your notices. A change has to be approved by Yanga after we confirm it is you.
           After it is approved, sign in again with the new address; your password stays the same.
@@ -159,11 +180,12 @@ const PayoutRequestCard = () => {
           </div>
         )}
       </div>
+    </section>
 
       {message.text && <p className={`text-sm font-medium mt-3 ${message.kind === 'ok' ? 'text-green-700' : 'text-red-600'}`} role="status">{message.text}</p>}
 
       {requests.length > 0 && (
-        <div className="mt-5">
+        <section className="bg-white rounded-xl border border-gray-100 p-5">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Your requests</h3>
           <ul className="space-y-2">
             {requests.slice(0, 5).map((r) => (
@@ -176,9 +198,9 @@ const PayoutRequestCard = () => {
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
-    </section>
+    </div>
   );
 };
 

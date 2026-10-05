@@ -48,6 +48,7 @@ const StayRegister = () => {
   const [form, setForm] = useState(EMPTY);
   const [location, setLocation] = useState(null);
   const [accepted, setAccepted] = useState(false);
+  const [wantsTraining, setWantsTraining] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +129,7 @@ const StayRegister = () => {
         latitude: location.latitude,
         longitude: location.longitude,
         termsAccepted: true,
+        wantsTraining,
       });
       setDone(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -294,6 +296,11 @@ const StayRegister = () => {
                 <span>I have read and accept the terms and conditions, including that refunds and cancellations are my responsibility.</span>
               </label>
             </div>
+
+            <label className="flex items-start gap-3 text-sm text-white/80 cursor-pointer">
+              <input type="checkbox" className="mt-1 h-4 w-4 accent-amber-500" checked={wantsTraining} onChange={(e) => setWantsTraining(e.target.checked)} />
+              <span>I would like <strong className="text-amber-400">free training</strong> on using the Yanga Homes dashboard (optional).</span>
+            </label>
 
             {error && <p className="text-sm text-red-400 font-medium" role="alert">{error}</p>}
 

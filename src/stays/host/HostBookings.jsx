@@ -3,6 +3,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { FileText, MessageCircle, Phone, Search, XCircle } from 'lucide-react';
 import { db } from '../../Config/firebaseConfig';
 import { useHost } from './HostContext';
+import ExtractButton from './ExtractButton';
 import {
   bookingPhase, callStay, friendlyError, kwacha, prettyDay, prettyTime, todayZm,
 } from '../stayConfig';
@@ -37,6 +38,39 @@ const payoutText = (b) => {
     case 'needs_review': return { text: 'Payment to you is being sorted by Yanga', cls: 'text-red-700' };
     default: return { text: '', cls: '' };
   }
+};
+
+// Colours for the check-in / check-out box, by where the stay is up to.
+const DATE_BOX = {
+  upcoming:  'bg-blue-50 border-blue-200 text-blue-900',
+  inhouse:   'bg-green-100 border-green-400 text-green-900',
+  past:      'bg-gray-50 border-gray-200 text-gray-700',
+  cancelled: 'bg-red-50 border-red-200 text-red-800',
+  attention: 'bg-amber-50 border-amber-200 text-amber-900',
+};
+
+// A short line under the dates: how soon guests arrive, or when the one in house leaves.
+const stayNote = (b) => {
+  const today = todayZm();
+  const days = (a, c) => Math.round((Date.parse(`${c}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+  if (b.phase === 'upcoming') {
+    const d = days(today, b.checkIn);
+    return d === 1 ? 'Arrives tomorrow' : `Arrives in ${d} days`;
+  }
+  if (b.phase === 'inhouse') {
+    const d = days(today, b.checkOut);
+    return d === 1 ? 'Staying now · leaves tomorrow' : `Staying now · leaves in ${d} days`;
+  }
+  return '';
+};
+
+// What each tab is for, shown when it is empty.
+const EMPTY = {
+  upcoming: 'No upcoming bookings. This tab lists paid bookings whose check-in date is still ahead of today. Guests staying now are under "In house".',
+  inhouse: 'Nobody is staying right now. This tab lists guests whose check-in date has arrived and who have not yet checked out.',
+  past: 'No past stays yet. Guests move here once their check-out date has passed.',
+  cancelled: 'No cancelled bookings.',
+  attention: 'Nothing is being sorted. Payments that need a check by Yanga appear here.',
 };
 
 const toWhatsApp = (local) => `https://wa.me/260${String(local).replace(/\D/g, '').replace(/^0/, '')}`;
@@ -109,6 +143,20 @@ const HostBookings = () => {
 
   const markSeen = (b) => updateDoc(doc(db, 'stayBookings', b.id), { hostSeen: true }).catch(() => {});
 
+  const getSheets = () => [{
+    name: 'Bookings', title: `Bookings: ${FILTERS.find((f) => f.key === filter)?.label || ''}`,
+    columns: [
+      { header: 'Guest', key: 'guest', width: 130 }, { header: 'Phone', key: 'phone', width: 95 }, { header: 'Room', key: 'room', width: 120 },
+      { header: 'Check in', key: 'checkIn' }, { header: 'Check out', key: 'checkOut' }, { header: 'Nights', key: 'nights', type: 'number', width: 50 },
+      { header: 'Guest paid (K)', key: 'paid', type: 'money' }, { header: 'You receive (K)', key: 'net', type: 'money', width: 105 },
+      { header: 'Status', key: 'status' }, { header: 'Invoice', key: 'invoice', width: 110 }, { header: 'Booked', key: 'booked', width: 120 },
+    ],
+    rows: rows.map((b) => ({
+      guest: b.guestName, phone: b.guestPhone, room: b.roomName, checkIn: b.checkIn, checkOut: b.checkOut, nights: b.nights,
+      paid: b.total, net: b.businessAmount, status: PHASE_LABEL[b.phase] || b.status, invoice: b.invoiceNumber || '', booked: prettyTime(b.createdAt),
+    })),
+  }];
+
   const openInvoice = async (b) => {
     setInvoiceBusy(b.id); setNotice('');
     // Open the tab straight away (inside the click) so the browser doesn't block it.
@@ -126,12 +174,15 @@ const HostBookings = () => {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+        <div className="flex gap-2 items-center">
+        <ExtractButton filename="yanga-bookings" title="Bookings" getSheets={getSheets} disabled={!rows.length} />
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search guest, phone, room…"
             className="pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
+        </div>
         </div>
       </div>
 
@@ -153,7 +204,7 @@ const HostBookings = () => {
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-500">
           {bookings.length === 0
             ? 'No bookings yet. When a guest books and pays, it will appear here instantly.'
-            : 'No bookings match this filter.'}
+            : EMPTY[filter] || 'No bookings match this filter.'}
         </div>
       ) : (
         <div className="space-y-3">
@@ -169,9 +220,22 @@ const HostBookings = () => {
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${PHASE_STYLE[b.phase] || ''}`}>{PHASE_LABEL[b.phase]}</span>
                       {isNew && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-600 text-white">NEW</span>}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {prettyDay(b.checkIn)} → {prettyDay(b.checkOut)} · {b.nights} night{b.nights > 1 ? 's' : ''}
-                    </p>
+                    <div className={`mt-2 inline-flex items-stretch rounded-lg border overflow-hidden ${DATE_BOX[b.phase] || DATE_BOX.past}`}>
+                      <div className="px-3 py-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">Check-in</p>
+                        <p className="text-base font-extrabold leading-tight">{prettyDay(b.checkIn)}</p>
+                      </div>
+                      <div className="flex items-center px-1 text-lg font-bold opacity-60">→</div>
+                      <div className="px-3 py-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">Check-out</p>
+                        <p className="text-base font-extrabold leading-tight">{prettyDay(b.checkOut)}</p>
+                      </div>
+                      <div className="px-3 py-1.5 border-l border-black/10 flex flex-col justify-center text-center">
+                        <p className="text-base font-extrabold leading-tight">{b.nights}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">night{b.nights > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    {stayNote(b) && <p className="text-xs font-semibold mt-1.5 text-gray-700">{stayNote(b)}</p>}
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-gray-900">{kwacha(b.total)}</p>

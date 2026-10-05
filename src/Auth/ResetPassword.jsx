@@ -51,7 +51,7 @@ const ResetPassword = () => {
       clearPasswordResetFlag();
 
       // Accommodation businesses share this page but have their own dashboard.
-      navigate(userRole === 'stay_host' ? '/host/bookings' : '/portal-mgmt-xyz99/users');
+      navigate(userRole === 'stay_host' ? '/host/dashboard' : '/portal-mgmt-xyz99/users');
     } catch (err) {
       console.error(err);
       // Firebase throws 'auth/requires-recent-login' if the sign-in is

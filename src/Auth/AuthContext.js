@@ -32,9 +32,8 @@ export const AuthProvider = ({ children }) => {
           setNeedsPasswordReset(data?.resetPassword === true);
         } catch (error) {
           console.error('Failed to fetch user role:', error);
-          setUserRole('customer');
-          setIsManager(false);
-          setNeedsPasswordReset(false);
+          // A passing network error must not demote a signed-in user: keep the role we already know.
+          setUserRole((previous) => previous ?? 'customer');
         } finally {
           setRoleLoading(false);
         }

@@ -40,6 +40,7 @@ export const HostProvider = ({ children }) => {
   const [contact, setContact] = useState(null);   // phone, address, location (kept off the public business document)
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [payingNow, setPayingNow] = useState([]);   // guests who started paying but have not finished
   const [ready, setReady] = useState({ profile: false, bookings: false });
   const [error, setError] = useState('');
   const [alertBooking, setAlertBooking] = useState(null);
@@ -73,8 +74,10 @@ export const HostProvider = ({ children }) => {
     // The rule only lets a host read bookings that name them, so the query must filter on it.
     const q = query(collection(db, 'stayBookings'), where('businessOwnerUid', '==', uid), orderBy('createdAt', 'desc'), limit(300));
     return onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((b) => HOST_VISIBLE.includes(b.status));
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const list = all.filter((b) => HOST_VISIBLE.includes(b.status));
       setBookings(list);
+      setPayingNow(all.filter((b) => b.status === 'held'));
       setReady((r) => ({ ...r, bookings: true }));
 
       // Announce bookings that appear after the first load.
@@ -98,7 +101,7 @@ export const HostProvider = ({ children }) => {
   }, [unseen]);
 
   const value = {
-    uid, businessId, business, contact, rooms, bookings, unseen, error,
+    uid, businessId, business, contact, rooms, bookings, payingNow, unseen, error,
     loading: !(ready.profile && ready.bookings),
     alertBooking, dismissAlert: () => setAlertBooking(null),
   };

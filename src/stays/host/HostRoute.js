@@ -10,7 +10,8 @@ const HostRoute = ({ children }) => {
 
   if (loading || roleLoading) return <div className="p-8">Loading…</div>;
   if (!currentUser) return <Navigate to="/host/login" replace />;
-  if (userRole !== 'stay_host') return <Navigate to="/host/login" replace />;
+  // Someone else (for example a staff member in another tab) signed in on this browser.
+  if (userRole !== 'stay_host') return <Navigate to="/host/login" replace state={{ otherAccount: true }} />;
   if (needsPasswordReset) return <Navigate to="/host/reset-password" replace />;
 
   return children;

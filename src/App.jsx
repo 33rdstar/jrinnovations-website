@@ -30,6 +30,10 @@ const StayRegister = lazy(() => import('./stays/StayRegister'));
 const HostLogin = lazy(() => import('./stays/host/HostLogin'));
 const HostSetPassword = lazy(() => import('./stays/host/HostSetPassword'));
 const HostLayout = lazy(() => import('./stays/host/HostLayout'));
+const HostDashboard = lazy(() => import('./stays/host/HostDashboard'));
+const HostAnalytics = lazy(() => import('./stays/host/HostAnalytics'));
+const HostEarnings = lazy(() => import('./stays/host/HostEarnings'));
+const HostHelp = lazy(() => import('./stays/host/HostHelp'));
 const HostBookings = lazy(() => import('./stays/host/HostBookings'));
 const HostRooms = lazy(() => import('./stays/host/HostRooms'));
 const HostCalendar = lazy(() => import('./stays/host/HostCalendar'));
@@ -114,7 +118,11 @@ const App = () => {
               </Suspense>
             </HostRoute>
           }>
-            <Route index element={<Navigate to="bookings" replace />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<HostDashboard />} />
+            <Route path="analytics" element={<HostAnalytics />} />
+            <Route path="earnings" element={<HostEarnings />} />
+            <Route path="help" element={<HostHelp />} />
             <Route path="bookings" element={<HostBookings />} />
             <Route path="rooms" element={<HostRooms />} />
             <Route path="calendar" element={<HostCalendar />} />

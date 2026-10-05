@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../Config/firebaseConfig';
@@ -22,6 +22,7 @@ const HostLogin = () => {
   const [loading, setLoading] = useState(false);
   const [forgot, setForgot] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
@@ -37,7 +38,7 @@ const HostLogin = () => {
         setError('This sign-in is for Yanga Homes businesses. Staff should use the staff portal.');
         return;
       }
-      navigate(profile.resetPassword === true ? '/host/reset-password' : '/host/bookings');
+      navigate(profile.resetPassword === true ? '/host/reset-password' : '/host/dashboard');
     } catch (err) {
       console.error(err);
       setError('Failed to sign in. Check your email and password.');
@@ -63,6 +64,12 @@ const HostLogin = () => {
               <ForgotPasswordForm onBack={() => setForgot(false)} intro="Enter the email you registered with and we will send you a link to choose a new password." />
             </>
           ) : (<>
+          {location.state?.otherAccount && (
+            <p className="mb-4 rounded-lg bg-amber-400/15 border border-amber-400/40 p-3 text-sm text-amber-200">
+              Your business session ended because a different account signed in on this browser. A browser can hold only one
+              sign-in at a time, so please sign in again here, or use a separate browser or private window for each account.
+            </p>
+          )}
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-white/80 text-sm font-semibold mb-2">Email</label>

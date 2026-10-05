@@ -17,6 +17,18 @@ const RESTRICTION_PRESETS = [
   'No loud music', 'No alcohol', 'No cooking in the room', 'No children under 12',
 ];
 
+// A slider for turning a room on or off: green and "On" when guests can book it, red and "Off" when not.
+const RoomSwitch = ({ on, onChange, label, disabled = false }) => (
+  <button
+    type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={onChange}
+    className={`relative inline-flex items-center flex-shrink-0 h-8 w-[76px] rounded-full transition-colors duration-200 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+      on ? 'bg-emerald-500 focus:ring-emerald-500' : 'bg-red-500 focus:ring-red-500'}`}
+  >
+    <span className={`absolute text-[11px] font-extrabold tracking-wide text-white ${on ? 'left-3' : 'right-3'}`}>{on ? 'ON' : 'OFF'}</span>
+    <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all duration-200 ${on ? 'left-[48px]' : 'left-1'}`} />
+  </button>
+);
+
 const emptyForm = { name: '', description: '', pricePerNight: '', capacity: '2', amenities: '', restrictions: [], isActive: true, photos: [] };
 
 const RoomForm = ({ businessId, room, onClose }) => {
@@ -181,10 +193,13 @@ const RoomForm = ({ businessId, room, onClose }) => {
             </div>
           </div>
 
-          <label className="flex items-center gap-3 text-sm text-gray-800 cursor-pointer">
-            <input type="checkbox" className="h-4 w-4" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} />
-            Available for booking
-          </label>
+          <div className={`flex items-center justify-between gap-3 rounded-lg border p-3 ${form.isActive ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{form.isActive ? 'Available for booking' : 'Switched off'}</p>
+              <p className="text-xs text-gray-600">{form.isActive ? 'Guests can see and book this room.' : 'Guests cannot see or book this room.'}</p>
+            </div>
+            <RoomSwitch on={form.isActive} label="Available for booking" onChange={() => setForm((f) => ({ ...f, isActive: !f.isActive }))} />
+          </div>
         </div>
 
         {error && <p className="text-sm text-red-600 mt-4" role="alert">{error}</p>}
@@ -256,14 +271,14 @@ const HostRooms = () => {
           {rooms.map((room) => {
             const on = room.isActive !== false;
             return (
-              <div key={room.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden flex flex-col">
+              <div key={room.id} className={`bg-white rounded-xl border overflow-hidden flex flex-col ${on ? 'border-gray-100' : 'border-red-200'}`}>
                 {room.photos?.[0]
-                  ? <img src={room.photos[0]} alt={room.name} className="h-40 w-full object-cover" />
+                  ? <img src={room.photos[0]} alt={room.name} className={`h-40 w-full object-cover ${on ? '' : 'grayscale opacity-70'}`} />
                   : <div className="h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">No photo</div>}
                 <div className="p-4 flex-1 flex flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-bold text-gray-900">{room.name}</h3>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${on ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${on ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                       {on ? 'Available' : 'Switched off'}
                     </span>
                   </div>
@@ -278,9 +293,9 @@ const HostRooms = () => {
                     <button onClick={() => setEditing(room)} className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">
                       <Pencil size={14} /> Edit
                     </button>
-                    <button onClick={() => toggle(room)} className="flex-1 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">
-                      {on ? 'Switch off' : 'Switch on'}
-                    </button>
+                    <div className="flex-1 flex items-center justify-center">
+                      <RoomSwitch on={on} onChange={() => toggle(room)} label={`${on ? 'Switch off' : 'Switch on'} ${room.name}`} disabled={!canEdit} />
+                    </div>
                     <button onClick={() => remove(room)} aria-label="Delete room" className="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">
                       <Trash2 size={16} />
                     </button>
