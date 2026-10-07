@@ -4,13 +4,16 @@
 // auth gates access.
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../Config/firebaseConfig';
 import { useAgentNames } from './shared/useAgentNames';
 
-// Keep in sync with the deployed split (lister 60% / company 40%).
-const PAYOUT_RATIO  = 0.6;
-const COMPANY_RATIO = 0.4;
+// What the lister is sent for each contact fee: a fixed K30 (never more than was paid). Keep in sync with
+// AGENT_PAYOUT in the functions. Stay bookings are a different split: Yanga 12% / the business 88%.
+const AGENT_PAYOUT = 30;
+const STAY_COMMISSION = 0.12;
+
+const prettyStatus = (v) => (v ? String(v).replace(/_/g, ' ') : '—');
 
 const STATUS_COLORS = {
   completed:  { bg: '#d1fae5', color: '#065f46' },
@@ -40,6 +43,7 @@ export default function TransactionDetail() {
   const [txn, setTxn] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [payout, setPayout] = useState(undefined);   // the transfer to the lister / business: undefined = loading, null = none
   const { names: agentNames, resolveOne } = useAgentNames();
 
   useEffect(() => {
@@ -54,6 +58,20 @@ export default function TransactionDetail() {
         setLoading(false);
 
         if (data.ownerId) resolveOne(data.ownerId).catch(() => {});
+
+        // The transfer that paid the lister (or, for a stay, the business) is its own record.
+        try {
+          if (data.purpose === 'stay' && data.bookingId) {
+            const p = await getDoc(doc(db, 'stayPayouts', data.bookingId));
+            if (active) setPayout(p.exists() ? p.data() : null);
+          } else {
+            const q = await getDocs(query(collection(db, 'payouts'), where('transactionId', '==', snap.id), limit(1)));
+            if (active) setPayout(q.empty ? null : q.docs[0].data());
+          }
+        } catch (e) {
+          console.warn('Could not load the payout record:', e.message);
+          if (active) setPayout(null);
+        }
       } catch (e) {
         console.error('Failed to load transaction:', e);
         if (active) { setNotFound(true); setLoading(false); }
@@ -75,21 +93,32 @@ export default function TransactionDetail() {
   const sc = STATUS_COLORS[txn.status] || STATUS_COLORS.pending;
   const agentName = txn.ownerId ? (agentNames[txn.ownerId] || '') : '';
 
+  const isStay = txn.purpose === 'stay';
+  const agentShare = isStay
+    ? Math.round(amount * (1 - STAY_COMMISSION) * 100) / 100
+    : (txn.agentPayout ?? Math.min(AGENT_PAYOUT, amount));
+  const companyShare = Math.round((amount - agentShare) * 100) / 100;
+  const payoutStatus = payout === undefined ? 'Loading…' : payout ? prettyStatus(payout.status) : (txn.status === 'completed' ? 'No payout recorded' : '—');
+  const payoutRef = payout?.lencoReference || payout?.reference || txn.payoutReference || '—';
+
   const rows = [
     ['Date',               created ? created.toLocaleDateString('en-ZM', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
     ['Time',               created ? created.toLocaleTimeString('en-ZM', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'],
+    ['Type',               isStay ? 'Stay booking' : 'Contact reveal'],
     ['Reference',          txn.reference || txn.id],
     ['Transaction ID',     txn.id],
-    ['Agent / Lister',     agentName || txn.ownerId || '—'],
-    ['Agent ID',           txn.ownerId || '—'],
-    ['Property ID',        txn.propertyId || '—'],
+    isStay ? ['Booking ID', txn.bookingId || '—'] : ['Agent / Lister', agentName || txn.ownerId || '—'],
+    isStay ? ['Business ID', txn.businessId || txn.ownerId || '—'] : ['Agent ID', txn.ownerId || '—'],
+    isStay ? null : ['Property ID', txn.propertyId || '—'],
     ['Customer Phone',     txn.customerPhone || '—'],
     ['Amount',             fmtMoney(amount)],
-    ['Agent payout (60%)', fmtMoney(amount * PAYOUT_RATIO)],
-    ['Company share (40%)', fmtMoney(amount * COMPANY_RATIO)],
-    ['Payout status',      txn.payoutStatus || '—'],
-    ['Payout reference',   txn.payoutReference || '—'],
-  ];
+    [isStay ? 'Business share (88%)' : 'Agent payout', fmtMoney(agentShare)],
+    [isStay ? 'Yanga share (12%)' : 'Company share', fmtMoney(companyShare)],
+    ['Payout status',      payoutStatus],
+    ['Payout sent',        payout?.paidAt ? (toDateObj(payout.paidAt)?.toLocaleString('en-ZM') || '—') : '—'],
+    ['Payout reference',   payoutRef],
+    ['Payout to',          payout?.phone ? `${payout.phone}${payout.operator ? ` (${payout.operator})` : ''}` : '—'],
+  ].filter(Boolean);
 
   return (
     <Shell>
