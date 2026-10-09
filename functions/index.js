@@ -194,9 +194,12 @@ const ipRateKey = (request, scope) => {
 // requestPasswordReset
 // Public (no sign-in) — called from the app's "Forgot password" screen.
 //
-// Always answers the same way whether or not an account matches, so it
-// can't be used to find out who is registered. A ticket is only opened
-// when the phone number belongs to an account.
+// Tells the app whether an account uses the phone number (found: false
+// when it does not), so the person can correct the number. It says nothing
+// about the name or NRC, which only affect the note staff see, and the
+// per-phone and per-IP limits below stop it being used to trawl for
+// registered numbers. A ticket is only opened when the phone number belongs
+// to an account.
 exports.requestPasswordReset = onCall(
     {region: APP_REGION},
     async (request) => {
@@ -238,8 +241,8 @@ exports.requestPasswordReset = onCall(
           .limit(5)
           .get();
 
-      const genericReply = {ok: true};
-      if (found.empty) return genericReply;
+      const genericReply = {ok: true, found: true};
+      if (found.empty) return {ok: true, found: false};
 
       // Score each candidate; the best match is attached to the ticket.
       const scored = found.docs.map((d) => {

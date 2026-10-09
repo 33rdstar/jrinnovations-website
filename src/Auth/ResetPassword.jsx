@@ -14,7 +14,7 @@ const ResetPassword = () => {
   const [error, setError]                     = useState('');
   const [submitting, setSubmitting]           = useState(false);
   const navigate = useNavigate();
-  const { currentUser, clearPasswordResetFlag } = useAuth();
+  const { currentUser, userRole, clearPasswordResetFlag } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +50,8 @@ const ResetPassword = () => {
       // needsPasswordReset doesn't bounce us right back here
       clearPasswordResetFlag();
 
-      navigate('/portal-mgmt-xyz99/users');
+      // Accommodation businesses share this page but have their own dashboard.
+      navigate(userRole === 'stay_host' ? '/host/dashboard' : '/portal-mgmt-xyz99/users');
     } catch (err) {
       console.error(err);
       // Firebase throws 'auth/requires-recent-login' if the sign-in is

@@ -11,10 +11,23 @@ import { useAgentNames } from './shared/useAgentNames';
 import { toDateObj } from './TransactionDetail';
 
 // ── constants
-// Lister/agent gets 60% of each contact-reveal fee, company keeps 40%
-// (matches PAYOUT_RATIO in the mobile Cloud Functions).
-const PAYOUT_RATIO   = 0.6;
-const COMPANY_RATIO  = 0.4;
+// Contact-reveal fee: a fixed K30 goes to the lister, the rest to the company
+// (matches AGENT_PAYOUT in the mobile Cloud Functions). Stay bookings split
+// 12% company / 88% business instead. The server stamps agentPayout on a
+// transaction once it has paid out, which is preferred when present.
+const AGENT_PAYOUT     = 30;
+const STAY_COMPANY_PCT = 12;
+
+// Returns { agentCut, companyCut } for one transaction.
+const splitOf = (t) => {
+  const amount = t.amount || 0;
+  if (t.purpose === 'stay') {
+    const business = Math.floor((amount * (100 - STAY_COMPANY_PCT)) / 100 * 100) / 100;
+    return { agentCut: business, companyCut: amount - business };
+  }
+  const agentCut = typeof t.agentPayout === 'number' ? t.agentPayout : Math.min(AGENT_PAYOUT, amount);
+  return { agentCut, companyCut: amount - agentCut };
+};
 const STATUS_COLORS  = {
   completed:  { bg: '#d1fae5', color: '#065f46' },
   pending:    { bg: '#fef9c3', color: '#854d0e' },
@@ -90,11 +103,12 @@ export default function AdminTransactions() {
   const summary = useMemo(() => {
     const completed = transactions.filter(t => t.status === 'completed');
     const total     = completed.reduce((s, t) => s + (t.amount || 0), 0);
+    const splits = completed.map(splitOf);
     return {
       count:       completed.length,
       total,
-      company:     total * COMPANY_RATIO,
-      agentCuts:   total * PAYOUT_RATIO,
+      company:     splits.reduce((s, x) => s + x.companyCut, 0),
+      agentCuts:   splits.reduce((s, x) => s + x.agentCut, 0),
     };
   }, [transactions]);
 
@@ -112,8 +126,8 @@ export default function AdminTransactions() {
       {/* ── Summary cards ── */}
       <div style={styles.cards}>
         <SummaryCard label="Total Revenue"    value={fmt(summary.total)}      sub={`${summary.count} completed`} accent="#6366f1" />
-        <SummaryCard label="Company (40%)"    value={fmt(summary.company)}    sub="Net earnings"                 accent="#10b981" />
-        <SummaryCard label="Agent Payouts (60%)" value={fmt(summary.agentCuts)} sub="Across all agents"          accent="#f59e0b" />
+        <SummaryCard label="Company"            value={fmt(summary.company)}    sub="Net earnings"                 accent="#10b981" />
+        <SummaryCard label="Agent & business payouts" value={fmt(summary.agentCuts)} sub="Across all agents"          accent="#f59e0b" />
         <SummaryCard label="All Transactions" value={transactions.length}     sub="Including pending/failed"     accent="#64748b" />
       </div>
 
@@ -158,7 +172,7 @@ export default function AdminTransactions() {
               <thead>
                 <tr>
                   {['Date', 'Reference', 'Agent', 'Property ID', 'Customer Phone',
-                    'Amount', 'Agent 60%', 'Company 40%', 'Status'].map(h => (
+                    'Amount', 'Agent / business', 'Company', 'Status'].map(h => (
                     <th key={h} style={styles.th}>{h}</th>
                   ))}
                 </tr>
@@ -166,8 +180,7 @@ export default function AdminTransactions() {
               <tbody>
                 {paginated.map(t => {
                   const amount    = t.amount || 0;
-                  const agentCut  = amount * PAYOUT_RATIO;
-                  const companyCut= amount * COMPANY_RATIO;
+                  const { agentCut, companyCut } = splitOf(t);
                   const sc        = STATUS_COLORS[t.status] || STATUS_COLORS.pending;
                   return (
                     <tr

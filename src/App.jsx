@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './Auth/AuthContext';
 
 // Public Pages (HomePage & Navigation load eagerly — needed on first paint)
@@ -8,6 +8,7 @@ import Navigation from './Navigation';
 
 // Admin Guards
 import ProtectedRoute from './Auth/ProtectedRoute';
+import HostRoute from './stays/host/HostRoute';
 //import OfficerRoute from './Auth/OfficerRoute';
 
 // Lazy Load Admin Pages (Only downloads if the user visits the route)
@@ -21,6 +22,22 @@ const AdminTransactions = lazy(() => import('./admin/AdminTransactions'));
 const TransactionDetail = lazy(() => import('./admin/TransactionDetail'));
 const AdminAnalytics = lazy(() => import('./admin/AdminAnalytics'));
 const ResetPassword = lazy(() => import('./Auth/ResetPassword'));
+const StaysManager = lazy(() => import('./admin/StaysManager'));
+
+// Yanga Stays — public registration and the accommodation-business dashboard
+const YangaHomes = lazy(() => import('./stays/YangaHomes'));
+const StayRegister = lazy(() => import('./stays/StayRegister'));
+const HostLogin = lazy(() => import('./stays/host/HostLogin'));
+const HostSetPassword = lazy(() => import('./stays/host/HostSetPassword'));
+const HostLayout = lazy(() => import('./stays/host/HostLayout'));
+const HostDashboard = lazy(() => import('./stays/host/HostDashboard'));
+const HostAnalytics = lazy(() => import('./stays/host/HostAnalytics'));
+const HostEarnings = lazy(() => import('./stays/host/HostEarnings'));
+const HostHelp = lazy(() => import('./stays/host/HostHelp'));
+const HostBookings = lazy(() => import('./stays/host/HostBookings'));
+const HostRooms = lazy(() => import('./stays/host/HostRooms'));
+const HostCalendar = lazy(() => import('./stays/host/HostCalendar'));
+const HostProfile = lazy(() => import('./stays/host/HostProfile'));
 
 // Lazy public sub-pages — split out of the initial bundle (homepage stays eager)
 const InnovationPage = lazy(() => import('./InnovationPage'));
@@ -65,6 +82,53 @@ const App = () => {
             </>
           } />
 
+          {/* ─── YANGA HOMES: public landing page (own Yanga-themed header) ─ */}
+          <Route path="/yangahomes" element={
+            <Suspense fallback={<div className="p-8">Loading…</div>}>
+              <YangaHomes />
+            </Suspense>
+          } />
+
+          <Route path="/register" element={
+            <Suspense fallback={<div className="p-8">Loading…</div>}>
+              <StayRegister />
+            </Suspense>
+          } />
+
+          {/* ─── YANGA STAYS: BUSINESS DASHBOARD ──────────────────────── */}
+          <Route path="/host/login" element={
+            <Suspense fallback={<div className="p-8">Loading…</div>}>
+              <HostLogin />
+            </Suspense>
+          } />
+          <Route path="/host/set-password" element={
+            <Suspense fallback={<div className="p-8">Loading…</div>}>
+              <HostSetPassword />
+            </Suspense>
+          } />
+          <Route path="/host/reset-password" element={
+            <Suspense fallback={<div className="p-8">Loading…</div>}>
+              <ResetPassword />
+            </Suspense>
+          } />
+          <Route path="/host" element={
+            <HostRoute>
+              <Suspense fallback={<div className="p-8">Loading…</div>}>
+                <HostLayout />
+              </Suspense>
+            </HostRoute>
+          }>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<HostDashboard />} />
+            <Route path="analytics" element={<HostAnalytics />} />
+            <Route path="earnings" element={<HostEarnings />} />
+            <Route path="help" element={<HostHelp />} />
+            <Route path="bookings" element={<HostBookings />} />
+            <Route path="rooms" element={<HostRooms />} />
+            <Route path="calendar" element={<HostCalendar />} />
+            <Route path="profile" element={<HostProfile />} />
+          </Route>
+
           {/* ─── OBSCURE ADMIN ROUTES ─────────────────────────────────── */}
           <Route path="/portal-mgmt-xyz99/login" element={
             <Suspense fallback={<div className="p-8">Loading Security...</div>}>
@@ -105,6 +169,7 @@ const App = () => {
 			<Route path="audits" element={<AdminTransactions />} />
 			<Route path="analytics" element={<AdminAnalytics />} />
 			<Route path="queries" element={<CustomerService />} />
+			<Route path="stays" element={<StaysManager />} />
           </Route>
         </Routes>
       </Router>
