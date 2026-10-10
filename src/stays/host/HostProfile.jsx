@@ -9,7 +9,7 @@ import { compressImage, typeLabel } from '../stayConfig';
 import PayoutRequestCard from './PayoutRequestCard';
 
 const MAX_PHOTOS = 10;
-const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
+const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 
 const HostProfile = () => {
   const { businessId, business, contact } = useHost();
@@ -101,7 +101,7 @@ const HostProfile = () => {
         <div className="flex flex-wrap gap-3">
           {photos.map((url, i) => (
             <div key={url} className="relative w-24 h-24">
-              <img src={url} alt="" className={`w-24 h-24 object-cover rounded-lg border-2 ${i === 0 ? 'border-amber-500' : 'border-gray-200'}`} />
+              <img src={url} alt="" className={`w-24 h-24 object-cover rounded-lg border-2 ${i === 0 ? 'border-[#FFA500]' : 'border-gray-200'}`} />
               {i !== 0 && (
                 <button type="button" onClick={() => makeCover(url)} aria-label="Make cover photo" title="Make cover photo"
                   className="absolute bottom-1 left-1 w-6 h-6 rounded-full bg-white/90 text-amber-600 flex items-center justify-center"><Star size={14} /></button>
@@ -111,7 +111,7 @@ const HostProfile = () => {
             </div>
           ))}
           {photos.length < MAX_PHOTOS && (
-            <label className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-amber-500">
+            <label className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-[#FFA500]">
               <ImagePlus size={22} />{uploading ? 'Uploading…' : 'Add photo'}
               <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
             </label>
@@ -147,7 +147,7 @@ const HostProfile = () => {
         <p className={`text-sm font-medium ${message.kind === 'ok' ? 'text-green-700' : 'text-red-600'}`} role="status">{message.text}</p>
       )}
       <button type="submit" disabled={busy || uploading}
-        className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold disabled:opacity-60">
+        className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#FFA500] to-orange-600 text-white font-bold disabled:opacity-60">
         {busy ? 'Saving…' : 'Save changes'}
       </button>
     </form>

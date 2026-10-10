@@ -29,7 +29,7 @@ const ExtractButton = ({ filename, title, subtitle = '', getSheets, disabled = f
     <div className="relative inline-block" ref={box}>
       <button
         type="button" disabled={disabled} onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}
-        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${dark ? 'bg-amber-400 text-[#0D1B2A]' : 'bg-[#0D1B2A] text-white'}`}
+        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 ${dark ? 'bg-[#FFA500] text-[#0D1B2A]' : 'bg-[#0D1B2A] text-white'}`}
       >
         <FileDown size={15} /> Extract <ChevronDown size={14} />
       </button>

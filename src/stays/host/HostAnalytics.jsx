@@ -9,7 +9,7 @@ import { Stat } from './HostDashboard';
 import ExtractButton from './ExtractButton';
 
 // A simple horizontal/vertical bar list drawn with plain divs: no chart library needed.
-const Bars = ({ rows, format = (v) => v, colour = 'bg-amber-400', height = 140 }) => {
+const Bars = ({ rows, format = (v) => v, colour = 'bg-[#FFA500]', height = 140 }) => {
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <div className="flex items-end gap-2" style={{ height }}>
@@ -77,7 +77,7 @@ const HostAnalytics = () => {
           <ExtractButton filename={`yanga-analytics-${key}-days`} title={`Analytics: ${periodLabel}`} getSheets={getSheets} />
           {PERIODS.map((p) => (
             <button key={p.key} onClick={() => setKey(p.key)}
-              className={`px-3 py-1.5 rounded-full text-sm border ${key === p.key ? 'bg-amber-400 border-amber-400 text-[#0D1B2A] font-semibold' : 'border-gray-300 text-gray-600 bg-white'}`}>{p.label}</button>
+              className={`px-3 py-1.5 rounded-full text-sm border ${key === p.key ? 'bg-[#FFA500] border-[#FFA500] text-[#0D1B2A] font-semibold' : 'border-gray-300 text-gray-600 bg-white'}`}>{p.label}</button>
           ))}
         </div>
       </div>
@@ -105,7 +105,7 @@ const HostAnalytics = () => {
               {data.byRoom.map((r) => (
                 <li key={r.name}>
                   <div className="flex justify-between text-sm"><span className="font-medium text-gray-800 truncate">{r.name}</span><span className="text-gray-600">{kwacha(r.value)} · {r.count}</span></div>
-                  <div className="h-2 rounded bg-gray-100 mt-1"><div className="h-2 rounded bg-amber-400" style={{ width: `${(r.value / roomMax) * 100}%` }} /></div>
+                  <div className="h-2 rounded bg-gray-100 mt-1"><div className="h-2 rounded bg-[#FFA500]" style={{ width: `${(r.value / roomMax) * 100}%` }} /></div>
                 </li>
               ))}
             </ul>
@@ -120,7 +120,7 @@ const HostAnalytics = () => {
       </div>
 
       <section className="rounded-xl bg-[#0D1B2A] text-white p-5 text-sm space-y-1.5">
-        <p className="font-bold text-amber-400">Ideas to earn more</p>
+        <p className="font-bold text-[#FFA500]">Ideas to earn more</p>
         {cur.occupancy < 40 && <p>• Your rooms are empty most nights. Add more photos and check your price against similar places nearby.</p>}
         {cur.cancelRate > 15 && <p>• Many bookings are being cancelled. Make sure your calendar is accurate so you never have to cancel on a guest.</p>}
         {cur.leadDays > 0 && cur.leadDays < 2 && <p>• Guests mostly book at the last minute. Keep your calendar up to date every day.</p>}

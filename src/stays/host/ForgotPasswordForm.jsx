@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { callStay, friendlyError } from '../stayConfig';
 
 const AMBER = '#FFA500';
-const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400';
+const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 
 // Asks for a fresh set-password link. The server answers the same way whether or not
 // the email belongs to a business, so this never reveals who has an account.

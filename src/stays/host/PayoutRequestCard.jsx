@@ -5,7 +5,7 @@ import { useHost } from './HostContext';
 import { Mail, Wallet } from 'lucide-react';
 import { callStay, friendlyError, prettyTime } from '../stayConfig';
 
-const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
+const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 const STATUS = {
   pending: ['Waiting for review', 'bg-amber-100 text-amber-800'],
   approved: ['Approved', 'bg-green-100 text-green-800'],
@@ -115,7 +115,7 @@ const PayoutRequestCard = () => {
         </div>
       ) : !open ? (
         <button type="button" onClick={() => { setOpen(true); setMessage({ kind: '', text: '' }); }}
-          className="mt-4 px-4 py-2 rounded-lg border border-amber-500 text-amber-700 font-semibold text-sm hover:bg-amber-50">
+          className="mt-4 px-4 py-2 rounded-lg border border-[#FFA500] text-amber-700 font-semibold text-sm hover:bg-amber-50">
           Request a change
         </button>
       ) : (
@@ -130,7 +130,7 @@ const PayoutRequestCard = () => {
           </div>
           <p className="text-xs text-gray-500">Nothing changes until we have confirmed with you by phone and approved it.</p>
           <div className="flex gap-3">
-            <button type="button" disabled={busy} onClick={send} className="px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold text-sm disabled:opacity-60">{busy ? 'Sending…' : 'Send request'}</button>
+            <button type="button" disabled={busy} onClick={send} className="px-4 py-2 rounded-lg bg-[#FFA500] text-white font-semibold text-sm disabled:opacity-60">{busy ? 'Sending…' : 'Send request'}</button>
             <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm">Cancel</button>
           </div>
         </div>
@@ -160,7 +160,7 @@ const PayoutRequestCard = () => {
           </div>
         ) : !emailOpen ? (
           <button type="button" onClick={() => { setEmailOpen(true); setMessage({ kind: '', text: '' }); }}
-            className="mt-4 px-4 py-2 rounded-lg border border-amber-500 text-amber-700 font-semibold text-sm hover:bg-amber-50">
+            className="mt-4 px-4 py-2 rounded-lg border border-[#FFA500] text-amber-700 font-semibold text-sm hover:bg-amber-50">
             Request a change
           </button>
         ) : (
@@ -174,7 +174,7 @@ const PayoutRequestCard = () => {
               <textarea className={field} rows={2} maxLength={300} value={emailReason} onChange={(e) => setEmailReason(e.target.value)} placeholder="e.g. I no longer use the old address" />
             </div>
             <div className="flex gap-3">
-              <button type="button" disabled={busy} onClick={sendEmail} className="px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold text-sm disabled:opacity-60">{busy ? 'Sending…' : 'Send request'}</button>
+              <button type="button" disabled={busy} onClick={sendEmail} className="px-4 py-2 rounded-lg bg-[#FFA500] text-white font-semibold text-sm disabled:opacity-60">{busy ? 'Sending…' : 'Send request'}</button>
               <button type="button" onClick={() => setEmailOpen(false)} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm">Cancel</button>
             </div>
           </div>

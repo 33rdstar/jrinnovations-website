@@ -11,7 +11,7 @@ import useYangaFavicon from './useYangaFavicon';
 const AMBER = '#FFA500';
 const page = { background: 'linear-gradient(180deg, #050c2c 0%, #050b26 55%, #01030d 100%)' };
 const panel = 'rounded-2xl border border-white/10 bg-white/[0.04]';
-const input = 'w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400';
+const input = 'w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 const label = 'block text-sm font-semibold text-white/80 mb-1';
 
 const Field = ({ title, hint, children }) => (
@@ -241,7 +241,7 @@ const StayRegister = () => {
                   <button
                     key={r.value} type="button" role="radio" aria-checked={form.stayRole === r.value}
                     onClick={() => setForm((f) => ({ ...f, stayRole: r.value }))}
-                    className={`text-left rounded-xl border px-4 py-3 transition ${form.stayRole === r.value ? 'border-amber-400 bg-amber-400/10' : 'border-white/15 bg-white/5 hover:bg-white/10'}`}
+                    className={`text-left rounded-xl border px-4 py-3 transition ${form.stayRole === r.value ? 'border-[#FFA500] bg-[#FFA500]/10' : 'border-white/15 bg-white/5 hover:bg-white/10'}`}
                   >
                     <span className="font-semibold text-white">{r.label}</span>
                     <span className="block text-sm text-white/55">{r.hint}</span>
@@ -273,7 +273,7 @@ const StayRegister = () => {
                 <input className={input} inputMode="tel" value={form.payoutPhoneConfirm} onChange={set('payoutPhoneConfirm')} />
               </Field>
             </div>
-            <div className="rounded-lg border border-amber-400/30 p-3 text-sm text-amber-100" style={{ background: 'rgba(255,165,0,0.08)' }}>
+            <div className="rounded-lg border border-[#FFA500]/30 p-3 text-sm text-amber-100" style={{ background: 'rgba(255,165,0,0.08)' }}>
               Double-check this number. Payments are sent here automatically and cannot be recalled by Yanga.
             </div>
 
@@ -292,14 +292,14 @@ const StayRegister = () => {
                 </div>
               )}
               <label className="flex items-start gap-3 text-sm text-white/80 cursor-pointer">
-                <input type="checkbox" className="mt-1 h-4 w-4 accent-amber-500" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
+                <input type="checkbox" className="mt-1 h-4 w-4 accent-[#FFA500]" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
                 <span>I have read and accept the terms and conditions, including that refunds and cancellations are my responsibility.</span>
               </label>
             </div>
 
             <label className="flex items-start gap-3 text-sm text-white/80 cursor-pointer">
-              <input type="checkbox" className="mt-1 h-4 w-4 accent-amber-500" checked={wantsTraining} onChange={(e) => setWantsTraining(e.target.checked)} />
-              <span>I would like <strong className="text-amber-400">free training</strong> on using the Yanga Homes dashboard (optional).</span>
+              <input type="checkbox" className="mt-1 h-4 w-4 accent-[#FFA500]" checked={wantsTraining} onChange={(e) => setWantsTraining(e.target.checked)} />
+              <span>I would like <strong className="text-[#FFA500]">free training</strong> on using the Yanga Homes dashboard (optional).</span>
             </label>
 
             {error && <p className="text-sm text-red-400 font-medium" role="alert">{error}</p>}

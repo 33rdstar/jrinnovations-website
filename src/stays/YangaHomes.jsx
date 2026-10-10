@@ -46,7 +46,7 @@ const EarningsCalculator = () => {
     return { total: total / 100, business: business / 100, fee: (total - business) / 100 };
   }, [price, nights]);
 
-  const input = 'w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-amber-400';
+  const input = 'w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
   return (
     <div className={`${panel} p-6 sm:p-8 max-w-2xl mx-auto`}>
       <h3 className="text-xl font-bold text-white mb-1">See what you would earn</h3>
@@ -209,7 +209,7 @@ const YangaHomes = () => {
                 {REQUIREMENTS.map((r) => <li key={r} className="flex gap-2"><span style={{ color: AMBER }}>✓</span>{r}</li>)}
               </ul>
             </div>
-            <div className="rounded-2xl border border-amber-400/30 p-6" style={{ background: 'rgba(255,165,0,0.07)' }}>
+            <div className="rounded-2xl border border-[#FFA500]/30 p-6" style={{ background: 'rgba(255,165,0,0.07)' }}>
               <h3 className="font-bold mb-3" style={{ color: AMBER }}>Good to know</h3>
               <ul className="space-y-2 text-sm text-white/75">
                 <li>Your listing only goes live once Yanga has approved it.</li>

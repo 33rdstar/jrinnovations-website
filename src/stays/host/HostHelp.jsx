@@ -25,7 +25,7 @@ const HostHelp = () => {
     <section className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
       {QA.map(([q, a]) => (
         <details key={q} className="p-4 group">
-          <summary className="font-semibold text-gray-900 cursor-pointer list-none flex justify-between gap-3">{q}<span className="text-amber-500 group-open:rotate-45 transition-transform">+</span></summary>
+          <summary className="font-semibold text-gray-900 cursor-pointer list-none flex justify-between gap-3">{q}<span className="text-[#FFA500] group-open:rotate-45 transition-transform">+</span></summary>
           <p className="text-sm text-gray-600 mt-2">{a}</p>
         </details>
       ))}
@@ -41,9 +41,9 @@ const HostHelp = () => {
     </section>
 
     <section className="bg-[#0D1B2A] text-white rounded-xl p-5">
-      <h2 className="font-bold text-amber-400">Still need help?</h2>
+      <h2 className="font-bold text-[#FFA500]">Still need help?</h2>
       <p className="text-sm text-white/70 mt-1">Email the Yanga team from the address you sign in with and tell us your business name.</p>
-      <a href="mailto:yangamobile@gmail.com?subject=Yanga%20Stays%20help" className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-amber-400 text-[#0D1B2A] font-semibold text-sm">
+      <a href="mailto:yangamobile@gmail.com?subject=Yanga%20Stays%20help" className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-[#FFA500] text-[#0D1B2A] font-semibold text-sm">
         <Mail size={16} /> yangamobile@gmail.com
       </a>
       <p className="text-xs text-white/50 mt-3">The business terms you accepted at registration explain fees, payouts and cancellations.</p>

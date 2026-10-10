@@ -30,7 +30,7 @@ const monthCells = (ym) => {
 };
 
 const STATE_STYLE = {
-  free:    'bg-white border-gray-200 text-gray-800 hover:border-amber-400',
+  free:    'bg-white border-gray-200 text-gray-800 hover:border-[#FFA500]',
   paid:    'bg-blue-100 border-blue-300 text-blue-900',
   held:    'bg-amber-100 border-amber-300 text-amber-900',
   blocked: 'bg-gray-300 border-gray-400 text-gray-700 hover:bg-gray-200',
@@ -108,7 +108,7 @@ const HostCalendar = () => {
         <label className="flex items-center gap-2 text-sm text-gray-600">
           Room
           <select value={roomId} onChange={(e) => { setRoomId(e.target.value); setSelected(null); setDone(''); setError(''); }}
-            className="px-3 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            className="px-3 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFA500]">
             {rooms.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </label>
@@ -116,7 +116,7 @@ const HostCalendar = () => {
 
       {/* So there is never any doubt which room the dates below belong to */}
       {room && (
-        <div className="flex items-center gap-4 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 mb-4" aria-live="polite">
+        <div className="flex items-center gap-4 rounded-xl border-2 border-[#FFA500] bg-amber-50 p-3 mb-4" aria-live="polite">
           {cover
             ? <img src={cover} alt={room.name} className="w-24 h-20 sm:w-32 sm:h-24 rounded-lg object-cover flex-shrink-0" />
             : <div className="w-24 h-20 sm:w-32 sm:h-24 rounded-lg bg-white border border-amber-200 flex flex-col items-center justify-center text-amber-700 text-xs flex-shrink-0"><ImageOff size={20} />No photo</div>}
@@ -146,7 +146,7 @@ const HostCalendar = () => {
               <button
                 key={day} onClick={() => state !== 'past' && onDayClick(day)} disabled={state === 'past'}
                 title={state === 'free' ? 'Tap to block this night' : state === 'blocked' ? 'Tap to unblock' : state}
-                className={`aspect-square rounded-lg border text-sm font-medium flex items-center justify-center ${STATE_STYLE[state]} ${day === today ? 'ring-2 ring-amber-500' : ''}`}
+                className={`aspect-square rounded-lg border text-sm font-medium flex items-center justify-center ${STATE_STYLE[state]} ${day === today ? 'ring-2 ring-[#FFA500]' : ''}`}
               >
                 {Number(day.slice(8))}
               </button>

@@ -148,7 +148,7 @@ const LocationPicker = ({ value, onChange, dark = false, searchHint = '' }) => {
       <input
         type="text" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onEnter}
         placeholder={searchHint ? `Search, e.g. ${searchHint}` : 'Search a place, e.g. Chelstone, Lusaka'}
-        className={`flex-1 min-w-0 px-4 py-2.5 rounded-lg border ${inputCls} focus:outline-none focus:ring-2 focus:ring-amber-500`}
+        className={`flex-1 min-w-0 px-4 py-2.5 rounded-lg border ${inputCls} focus:outline-none focus:ring-2 focus:ring-[#FFA500]`}
       />
       <button type="button" onClick={search} disabled={searching}
         className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border ${btnCls} text-sm font-medium disabled:opacity-60`}>
@@ -171,7 +171,7 @@ const LocationPicker = ({ value, onChange, dark = false, searchHint = '' }) => {
                 <input
                   type="text" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={onEnter}
                   placeholder="Search a place, e.g. Chelstone, Lusaka"
-                  className="flex-1 min-w-0 px-3 py-2 rounded-md border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="flex-1 min-w-0 px-3 py-2 rounded-md border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
                 />
                 <button type="button" onClick={search} disabled={searching} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-[#050c2c] text-white text-sm font-medium disabled:opacity-60">
                   <Search size={16} /> {searching ? '…' : 'Search'}
@@ -205,7 +205,7 @@ const LocationPicker = ({ value, onChange, dark = false, searchHint = '' }) => {
       <p className={`text-xs ${muted}`}>
         {value
           ? <span className="inline-flex flex-wrap items-center gap-x-1"><MapPin size={13} /> Pin placed. Tap the map or drag the pin to move it.{' '}
-              <a href={mapsLink(value)} target="_blank" rel="noreferrer" className={`font-medium hover:underline ${dark ? 'text-amber-400' : 'text-amber-700'}`}>Check in Google Maps</a></span>
+              <a href={mapsLink(value)} target="_blank" rel="noreferrer" className={`font-medium hover:underline ${dark ? 'text-[#FFA500]' : 'text-amber-700'}`}>Check in Google Maps</a></span>
           : <>Search for your area, then tap the map on your exact building to drop the pin.{isTouch ? ' Tap "Expand map" to move around and zoom.' : ''}</>}
       </p>
       {!expanded && !!note && <p className={`text-sm ${dark ? 'text-amber-300' : 'text-amber-700'}`}>{note}</p>}

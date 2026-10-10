@@ -9,7 +9,7 @@ import { useHost } from './HostContext';
 import { COMMISSION_PERCENT, compressImage, kwacha, todayZm } from '../stayConfig';
 
 const MAX_PHOTOS = 10;
-const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500';
+const field = 'w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 
 // Common house rules a business can tick. Optional: leave all blank if nothing is restricted.
 const RESTRICTION_PRESETS = [
@@ -184,7 +184,7 @@ const RoomForm = ({ businessId, room, onClose }) => {
                 </div>
               ))}
               {form.photos.length < MAX_PHOTOS && (
-                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-amber-500">
+                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-[#FFA500]">
                   <ImagePlus size={20} />
                   {uploading ? 'Uploading…' : 'Add'}
                   <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
@@ -205,7 +205,7 @@ const RoomForm = ({ businessId, room, onClose }) => {
         {error && <p className="text-sm text-red-600 mt-4" role="alert">{error}</p>}
         <div className="flex gap-3 mt-6">
           <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium">Cancel</button>
-          <button type="submit" disabled={busy || uploading} className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold disabled:opacity-60">
+          <button type="submit" disabled={busy || uploading} className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-[#FFA500] to-orange-600 text-white font-bold disabled:opacity-60">
             {busy ? 'Saving…' : 'Save room'}
           </button>
         </div>
@@ -255,7 +255,7 @@ const HostRooms = () => {
         <h1 className="text-2xl font-bold text-gray-900">Rooms</h1>
         <button
           onClick={() => setEditing('new')} disabled={!canEdit}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#FFA500] to-orange-600 text-white font-semibold disabled:opacity-50"
         >
           <Plus size={18} /> Add room
         </button>

@@ -89,7 +89,7 @@ const CancelDialog = ({ booking, onClose, onDone }) => {
         </div>
         <label className="block text-sm font-medium text-gray-700 mt-4 mb-1">Reason (optional)</label>
         <textarea
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
           rows={3} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)}
         />
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
@@ -168,7 +168,7 @@ const HostBookings = () => {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search guest, phone, room…"
-            className="pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-[#FFA500]"
           />
         </div>
         </div>

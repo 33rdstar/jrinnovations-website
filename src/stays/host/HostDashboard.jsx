@@ -14,7 +14,7 @@ const TONES = {
   blue:   { card: 'bg-gradient-to-br from-blue-50 to-white border-blue-100',     icon: 'bg-blue-100 text-blue-600',     value: 'text-blue-900',    bar: 'bg-blue-500' },
   indigo: { card: 'bg-gradient-to-br from-indigo-50 to-white border-indigo-100', icon: 'bg-indigo-100 text-indigo-600', value: 'text-indigo-900',  bar: 'bg-indigo-500' },
   green:  { card: 'bg-gradient-to-br from-emerald-50 to-white border-emerald-100', icon: 'bg-emerald-100 text-emerald-600', value: 'text-emerald-900', bar: 'bg-emerald-500' },
-  amber:  { card: 'bg-gradient-to-br from-amber-50 to-white border-amber-100',   icon: 'bg-amber-100 text-amber-600',   value: 'text-amber-900',   bar: 'bg-amber-500' },
+  amber:  { card: 'bg-gradient-to-br from-amber-50 to-white border-amber-100',   icon: 'bg-amber-100 text-amber-600',   value: 'text-amber-900',   bar: 'bg-[#FFA500]' },
   violet: { card: 'bg-gradient-to-br from-violet-50 to-white border-violet-100', icon: 'bg-violet-100 text-violet-600', value: 'text-violet-900',  bar: 'bg-violet-500' },
   teal:   { card: 'bg-gradient-to-br from-teal-50 to-white border-teal-100',     icon: 'bg-teal-100 text-teal-600',     value: 'text-teal-900',    bar: 'bg-teal-500' },
   sky:    { card: 'bg-gradient-to-br from-sky-50 to-white border-sky-100',       icon: 'bg-sky-100 text-sky-600',       value: 'text-sky-900',     bar: 'bg-sky-500' },

@@ -9,7 +9,7 @@ import ForgotPasswordForm from './ForgotPasswordForm';
 import useYangaFavicon from '../useYangaFavicon';
 
 const AMBER = '#FFA500';
-const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400';
+const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 
 // Sign-in for Yanga Homes businesses. Separate from the staff portal login:
 // hosts sign in with the email they applied with, and only a stay_host account
@@ -65,7 +65,7 @@ const HostLogin = () => {
             </>
           ) : (<>
           {location.state?.otherAccount && (
-            <p className="mb-4 rounded-lg bg-amber-400/15 border border-amber-400/40 p-3 text-sm text-amber-200">
+            <p className="mb-4 rounded-lg bg-[#FFA500]/15 border border-[#FFA500]/40 p-3 text-sm text-amber-200">
               Your business session ended because a different account signed in on this browser. A browser can hold only one
               sign-in at a time, so please sign in again here, or use a separate browser or private window for each account.
             </p>

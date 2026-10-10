@@ -8,7 +8,7 @@ import useYangaFavicon from '../useYangaFavicon';
 
 const AMBER = '#FFA500';
 const MIN_LENGTH = 8;
-const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-amber-400';
+const inputCls = 'w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFA500]';
 
 const Shell = ({ title, subtitle, children }) => (
   <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(180deg, #050c2c 0%, #01030d 100%)' }}>
