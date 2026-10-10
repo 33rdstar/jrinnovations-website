@@ -42,7 +42,7 @@ const Shell = () => {
   const sidebar = (
     <div className="h-full flex flex-col bg-[#0D1B2A] text-white">
       <div className="px-5 py-5 border-b border-white/10">
-        <p className="text-amber-400 font-bold text-lg leading-tight">Yanga Stays</p>
+        <p className="text-amber-400 font-bold text-lg leading-tight">Yanga</p>
         <p className="text-xs text-white/60 mt-1 truncate">{business?.name || 'Loading…'}</p>
         {business?.ownerRole && <p className="text-[11px] text-white/40">{business.ownerRole === 'manager' ? 'Manager' : 'Owner'} login</p>}
       </div>
@@ -83,7 +83,7 @@ const Shell = () => {
       <header className="lg:hidden sticky top-0 z-30 bg-[#0D1B2A] text-white flex items-center gap-3 px-4 py-3">
         <button onClick={() => setOpen(true)} aria-label="Open menu" className="p-1"><Menu size={22} /></button>
         <div className="min-w-0 flex-1">
-          <p className="text-amber-400 font-semibold leading-tight">Yanga Stays</p>
+          <p className="text-amber-400 font-semibold leading-tight">Yanga</p>
           <p className="text-xs text-white/60 truncate">{business?.name || 'Loading…'}</p>
         </div>
         {unseen > 0 && <span className="min-w-[22px] h-6 px-2 rounded-full bg-red-500 text-xs font-bold flex items-center justify-center">{unseen}</span>}

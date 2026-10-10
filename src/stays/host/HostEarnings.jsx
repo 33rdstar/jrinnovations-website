@@ -4,12 +4,12 @@ import { kwacha, prettyDay, prettyTime, tsMillis } from '../stayConfig';
 import ExtractButton from './ExtractButton';
 
 const PAY = {
-  paid: ['Sent to your mobile money', 'bg-green-50 text-green-700'],
-  processing: ['On its way', 'bg-amber-50 text-amber-800'],
-  pending: ['Being sent', 'bg-amber-50 text-amber-800'],
-  failed: ['Being sorted by Yanga', 'bg-red-50 text-red-700'],
-  skipped: ['Being sorted by Yanga', 'bg-red-50 text-red-700'],
-  needs_review: ['Being sorted by Yanga', 'bg-red-50 text-red-700'],
+  paid: ['Payout confirmed', 'bg-green-50 text-green-700'],
+  processing: ['Not yet confirmed', 'bg-amber-50 text-amber-800'],
+  pending: ['Not yet sent', 'bg-amber-50 text-amber-800'],
+  failed: ['Under review by Yanga', 'bg-red-50 text-red-700'],
+  skipped: ['Under review by Yanga', 'bg-red-50 text-red-700'],
+  needs_review: ['Under review by Yanga', 'bg-red-50 text-red-700'],
 };
 
 // A statement of every paid booking: what the guest paid, Yanga's fee, and what reached the business.

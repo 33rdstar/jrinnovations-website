@@ -28,18 +28,6 @@ const PHASE_LABEL = {
   upcoming: 'Upcoming', inhouse: 'In house', past: 'Completed', cancelled: 'Cancelled', attention: 'Under review',
 };
 
-const payoutText = (b) => {
-  switch (b.payoutStatus) {
-    case 'paid': return { text: 'Paid to your mobile money', cls: 'text-green-700' };
-    case 'processing': return { text: 'Payment to you is on its way', cls: 'text-amber-700' };
-    case 'pending': return { text: 'Payment to you is being sent', cls: 'text-amber-700' };
-    case 'failed':
-    case 'skipped':
-    case 'needs_review': return { text: 'Payment to you is being sorted by Yanga', cls: 'text-red-700' };
-    default: return { text: '', cls: '' };
-  }
-};
-
 // Colours for the check-in / check-out box, by where the stay is up to.
 const DATE_BOX = {
   upcoming:  'bg-blue-50 border-blue-200 text-blue-900',
@@ -210,7 +198,6 @@ const HostBookings = () => {
         <div className="space-y-3">
           {rows.map((b) => {
             const isNew = b.status === 'paid' && b.hostSeen === false;
-            const pay = payoutText(b);
             return (
               <div key={b.id} className={`bg-white rounded-xl border p-4 sm:p-5 ${isNew ? 'border-green-400 ring-1 ring-green-300' : 'border-gray-100'}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -275,7 +262,6 @@ const HostBookings = () => {
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                   <span>
                     {b.invoiceNumber && <>Invoice {b.invoiceNumber} · </>}Booked {prettyTime(b.paidAt || b.createdAt)}
-                    {pay.text && <> · <span className={pay.cls}>{pay.text}</span></>}
                   </span>
                   <div className="flex gap-2">
                     {isNew && (
