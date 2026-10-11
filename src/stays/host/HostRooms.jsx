@@ -109,13 +109,15 @@ const RoomForm = ({ businessId, room, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-start sm:items-center justify-center p-4 overflow-y-auto">
-      <form onSubmit={save} className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl my-4">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 sm:p-6">
+      <form onSubmit={save} className="bg-white rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <h3 className="text-lg font-bold text-gray-900">{isNew ? 'Add a room' : 'Edit room'}</h3>
           <button type="button" onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
         </div>
 
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="grid lg:grid-cols-2 gap-x-8 gap-y-5">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Room name</label>
@@ -147,6 +149,9 @@ const RoomForm = ({ businessId, room, onClose }) => {
             <p className="text-xs text-gray-500 mt-1">Separate with commas.</p>
           </div>
 
+        </div>
+
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Not allowed <span className="font-normal text-gray-400">(optional)</span></label>
             <p className="text-xs text-gray-500 mb-2">Guests see these before they book. Tick any that apply, or leave this blank if nothing is restricted.</p>
@@ -177,14 +182,14 @@ const RoomForm = ({ businessId, room, onClose }) => {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Photos ({form.photos.length}/{MAX_PHOTOS})</label>
             <div className="flex flex-wrap gap-2">
               {form.photos.map((url) => (
-                <div key={url} className="relative w-20 h-20">
-                  <img src={url} alt="" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                <div key={url} className="relative w-24 h-24">
+                  <img src={url} alt="" className="w-24 h-24 object-cover rounded-lg border border-gray-200" />
                   <button type="button" onClick={() => removePhoto(url)} aria-label="Remove photo"
                     className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center"><X size={14} /></button>
                 </div>
               ))}
               {form.photos.length < MAX_PHOTOS && (
-                <label className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-[#FFA500]">
+                <label className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-xs text-gray-500 cursor-pointer hover:border-[#FFA500]">
                   <ImagePlus size={20} />
                   {uploading ? 'Uploading…' : 'Add'}
                   <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
@@ -201,13 +206,17 @@ const RoomForm = ({ businessId, room, onClose }) => {
             <RoomSwitch on={form.isActive} label="Available for booking" onChange={() => setForm((f) => ({ ...f, isActive: !f.isActive }))} />
           </div>
         </div>
+        </div>
+        </div>
 
-        {error && <p className="text-sm text-red-600 mt-4" role="alert">{error}</p>}
-        <div className="flex gap-3 mt-6">
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium">Cancel</button>
-          <button type="submit" disabled={busy || uploading} className="flex-1 py-2.5 rounded-lg bg-gradient-to-r from-[#FFA500] to-orange-600 text-white font-bold disabled:opacity-60">
-            {busy ? 'Saving…' : 'Save room'}
-          </button>
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+          {error && <p className="text-sm text-red-600 mb-3" role="alert">{error}</p>}
+          <div className="flex gap-3 sm:justify-end">
+            <button type="button" onClick={onClose} className="flex-1 sm:flex-none sm:px-8 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium">Cancel</button>
+            <button type="submit" disabled={busy || uploading} className="flex-1 sm:flex-none sm:px-10 py-2.5 rounded-lg bg-gradient-to-r from-[#FFA500] to-orange-600 text-white font-bold disabled:opacity-60">
+              {busy ? 'Saving…' : 'Save room'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
